@@ -11,6 +11,7 @@ int help();
 int quit();
 int badcommand();
 int set(char* var, char* value);
+int echo(char* var);
 int print(char* var);
 int run(char* script);
 int badcommandFileDoesNotExist();
@@ -51,6 +52,10 @@ int interpreter(char* command_args[], int args_size){
 		if (args_size != 2) return badcommand();
 		return run(command_args[1]);
 	
+	} else if (strcmp(command_args[0], "echo")==0) {
+		// TODO: may need to modify this once enhanced set implemented
+		if (args_size != 2) return badcommand();
+		return echo(command_args[1]);
 	} else return badcommand();
 }
 
@@ -94,6 +99,24 @@ int set(char* var, char* value){
 
 	return 0;
 
+}
+
+int echo(char* var) {
+
+	if (var[0] == '$') {	// check if input is from memory
+		char *varFromMem = var + 1;
+
+		if (check_mem_value_exists(varFromMem)) {	// check for existance
+			print(varFromMem);
+
+		} else {
+			printf("%s\n","");
+		}
+
+	} else {
+		printf("%s\n", var);	// normal echo if not referencing memory
+	}
+	return 0;
 }
 
 int print(char* var){
