@@ -53,9 +53,8 @@ int interpreter(char* command_args[], int args_size){
 		return run(command_args[1]);
 	
 	} else if (strcmp(command_args[0], "echo")==0) {
-		// TODO: may need to modify this to take in multiple args?? read code more
-		// initial for arg size 2 just to test basic echo
-		if (args_size < 2) return badcommand();
+		// TODO: may need to modify this once enhanced set implemented
+		if (args_size != 2) return badcommand();
 		return echo(command_args[1]);
 	} else return badcommand();
 }
