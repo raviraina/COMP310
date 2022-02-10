@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
+#include <dirent.h>
 
 #include "shellmemory.h"
 #include "shell.h"
@@ -12,6 +13,7 @@ int quit();
 int badcommand();
 int set(char* var, char* value);
 int echo(char* var);
+int myls();
 int print(char* var);
 int run(char* script);
 int badcommandFileDoesNotExist();
@@ -56,6 +58,9 @@ int interpreter(char* command_args[], int args_size){
 		// TODO: may need to modify this once enhanced set implemented
 		if (args_size != 2) return badcommand();
 		return echo(command_args[1]);
+	} else if (strcmp(command_args[0], "my_ls")==0) {
+		if (args_size != 1) return badcommand();
+		return myls();
 	} else return badcommand();
 }
 
@@ -147,4 +152,17 @@ int run(char* script){
     fclose(p);
 
 	return errCode;
+}
+
+int myls() {
+	// dirent init
+	struct dirent *de;
+	DIR *dr = opendir(".");
+	// works but not sorted
+	// TODO: implement storage and sorting
+	while ((de = readdir(dr)) != NULL)
+		printf("%s\n", de->d_name);
+  
+    closedir(dr);  
+	return 0;
 }
