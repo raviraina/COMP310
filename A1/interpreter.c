@@ -104,24 +104,18 @@ int set(char* var, char* value){
 
 int echo(char* var) {
 
-	// check if the argument is referencing a set variable
-	if (var[0] == '$'){
-
-		// increment pointer to get reference, then check if it exists˚s
+	if (var[0] == '$') {	// check if input is from memory
 		char *varFromMem = var + 1;
 
-		// TODO: this is hacky, maybe change to more elegant/failsafe solution
-		int res = strcmp(mem_get_value(varFromMem),"Variable does not exist");
-
-		if (res == 0) {
-			printf("%s\n","");
-		} else {
+		if (check_mem_value_exists(varFromMem)) {	// check for existance
 			print(varFromMem);
+
+		} else {
+			printf("%s\n","");
 		}
+
 	} else {
-		
-		// print what was passed in if not a reference
-		printf("%s\n", var);
+		printf("%s\n", var);	// normal echo if not referencing memory
 	}
 	return 0;
 }
