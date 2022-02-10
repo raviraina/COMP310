@@ -11,6 +11,7 @@ int help();
 int quit();
 int badcommand();
 int set(char* var, char* value);
+int echo(char* var);
 int print(char* var);
 int run(char* script);
 int badcommandFileDoesNotExist();
@@ -51,6 +52,11 @@ int interpreter(char* command_args[], int args_size){
 		if (args_size != 2) return badcommand();
 		return run(command_args[1]);
 	
+	} else if (strcmp(command_args[0], "echo")==0) {
+		// TODO: may need to modify this to take in multiple args?? read code more
+		// initial for arg size 2 just to test basic echo
+		if (args_size < 2) return badcommand();
+		return echo(command_args[1]);
 	} else return badcommand();
 }
 
@@ -94,6 +100,30 @@ int set(char* var, char* value){
 
 	return 0;
 
+}
+
+int echo(char* var) {
+
+	// check if the argument is referencing a set variable
+	if (var[0] == '$'){
+
+		// increment pointer to get reference, then check if it exists˚s
+		char *varFromMem = var + 1;
+
+		// TODO: this is hacky, maybe change to more elegant/failsafe solution
+		int res = strcmp(mem_get_value(varFromMem),"Variable does not exist");
+
+		if (res == 0) {
+			printf("%s\n","");
+		} else {
+			print(varFromMem);
+		}
+	} else {
+		
+		// print what was passed in if not a reference
+		printf("%s\n", var);
+	}
+	return 0;
 }
 
 int print(char* var){
