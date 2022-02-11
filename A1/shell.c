@@ -48,7 +48,7 @@ int parseInput(char ui[]) {
 	char tmp[200];
 	char *words[100];							
 	int a,b;							
-	int w=0; // wordID
+	int w=0; // wordID -- number of words in the user input
 
 	for(a=0; ui[a]==' ' && a<1000; a++);		// skip white spaces
 
