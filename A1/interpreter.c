@@ -6,7 +6,6 @@
 #include "shell.h"
 
 int MAX_ARGS_SIZE = 3;
-int MAX_NAME_LENGTH = 100;
 
 int help();
 int quit();
