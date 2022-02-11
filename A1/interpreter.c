@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
-#include <dirent.h>
+#include <string.h>
 
 #include "shellmemory.h"
 #include "shell.h"
 
 int MAX_ARGS_SIZE = 3;
+int MAX_NAME_LENGTH = 100;
 
 int help();
 int quit();
@@ -155,14 +155,6 @@ int run(char* script){
 }
 
 int myls() {
-	// dirent init
-	struct dirent *de;
-	DIR *dr = opendir(".");
-	// works but not sorted
-	// TODO: implement storage and sorting
-	while ((de = readdir(dr)) != NULL)
-		printf("%s\n", de->d_name);
-  
-    closedir(dr);  
+	system("ls -1 | sort");
 	return 0;
 }
