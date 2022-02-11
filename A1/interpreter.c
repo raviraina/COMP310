@@ -1,17 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
 
 #include "shellmemory.h"
 #include "shell.h"
 
 int MAX_ARGS_SIZE = 3;
+int MAX_NAME_LENGTH = 100;
 
 int help();
 int quit();
 int badcommand();
 int set(char* var, char* value);
 int echo(char* var);
+int myls();
 int print(char* var);
 int run(char* script);
 int badcommandFileDoesNotExist();
@@ -56,6 +58,9 @@ int interpreter(char* command_args[], int args_size){
 		// TODO: may need to modify this once enhanced set implemented
 		if (args_size != 2) return badcommand();
 		return echo(command_args[1]);
+	} else if (strcmp(command_args[0], "my_ls")==0) {
+		if (args_size != 1) return badcommand();
+		return myls();
 	} else return badcommand();
 }
 
@@ -147,4 +152,9 @@ int run(char* script){
     fclose(p);
 
 	return errCode;
+}
+
+int myls() {
+	system("ls -1 | sort");
+	return 0;
 }
