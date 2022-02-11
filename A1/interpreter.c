@@ -5,12 +5,13 @@
 #include "shellmemory.h"
 #include "shell.h"
 
-int MAX_ARGS_SIZE = 3;
+int MAX_ARGS_SIZE = 7;
 
 int help();
 int quit();
 int badcommand();
-int set(char* var, char* value);
+// int set(char* var, char* value);
+int set(char **, int);
 int echo(char* var);
 int myls();
 int print(char* var);
@@ -42,8 +43,8 @@ int interpreter(char* command_args[], int args_size){
 
 	} else if (strcmp(command_args[0], "set")==0) {
 		//set
-		if (args_size != 3) return badcommand();	
-		return set(command_args[1], command_args[2]);
+		if (args_size < 3 || args_size > 7) return badcommand();	
+		return set(command_args+1, args_size-1); // pointer to input #2 and beyond (depends on args_size)
 	
 	} else if (strcmp(command_args[0], "print")==0) {
 		if (args_size != 2) return badcommand();
@@ -91,18 +92,22 @@ int badcommandFileDoesNotExist(){
 	return 3;
 }
 
-int set(char* var, char* value){
-
-	char *link = "=";
+// param args: array of strings (args[0] := variable name; args[1: args_size] := tokens)
+// param ars_size: length of args
+int set(char* args[], int args_size){
+	char *var = args[0];
 	char buffer[1000];
-	strcpy(buffer, var);
-	strcat(buffer, link);
-	strcat(buffer, value);
+	
+	strcpy(buffer, args[1]); // copy first token to the buffer
+	
+	for(int i = 2; i < args_size; i++){ //copy remaining tokens to the buffer, if any
+		strcat(buffer, " ");
+		strcat(buffer, args[i]);
+	}
 
-	mem_set_value(var, value);
+	mem_set_value(var, buffer);
 
 	return 0;
-
 }
 
 int echo(char* var) {
