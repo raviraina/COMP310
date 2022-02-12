@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string.h> 
 #include "interpreter.h"
 #include "shellmemory.h"
 
@@ -35,7 +35,6 @@ int main(int argc, char *argv[])
 		}
 		printf("%c ", prompt);
 		fgets(userInput, MAX_USER_INPUT - 1, stdin);
-
 		errorCode = parseInput(userInput);
 		if (errorCode == -1)
 			exit(99); // ignore all other errors
