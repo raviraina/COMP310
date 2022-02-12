@@ -4,66 +4,84 @@
 #include "interpreter.h"
 #include "shellmemory.h"
 
+const int MAX_USER_INPUT = 1000;
+const int MAX_NUM_COMMANDS = 10;
 
-int MAX_USER_INPUT = 1000;
 int parseInput(char ui[]);
 
 // Start of everything
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
 
 	printf("%s\n", "Shell version 1.1 Created January 2022");
 	help();
 
-	char prompt = '$';  				// Shell prompt
-	char userInput[MAX_USER_INPUT];		// user's input stored here
-	int errorCode = 0;					// zero means no error, default
+	char prompt = '$';				// Shell prompt
+	char userInput[MAX_USER_INPUT]; // user's input stored here
+	int errorCode = 0;				// zero means no error, default
 
-	//init user input
-	for (int i=0; i<MAX_USER_INPUT; i++)
+	// init user input
+	for (int i = 0; i < MAX_USER_INPUT; i++)
 		userInput[i] = '\0';
-	
-	//init shell memory
+
+	// init shell memory
 	mem_init();
 
-	while(1) {
-		if (feof(stdin)) {
+	while (1)
+	{
+		if (feof(stdin))
+		{
 			freopen("/dev/tty", "r", stdin);
-		}						
-		printf("%c ",prompt);
-		fgets(userInput, MAX_USER_INPUT-1, stdin);
-
+		}
+		printf("%c ", prompt);
+		fgets(userInput, MAX_USER_INPUT - 1, stdin);
 		errorCode = parseInput(userInput);
-		if (errorCode == -1) exit(99);	// ignore all other errors
+		if (errorCode == -1)
+			exit(99); // ignore all other errors
 		memset(userInput, 0, sizeof(userInput));
-
 	}
 
 	return 0;
-
 }
 
 // Extract words from the input then call interpreter
-int parseInput(char ui[]) {
- 
-	char tmp[200];
-	char *words[100];							
-	int a,b;							
-	int w=0; // wordID
+int parseInput(char ui[])
+{
+	char *words[100]; // holds parsed commands and arguments until they are sent to the interpreter
+	int w = 0; // wordID -- number of words in the user input (in each command)
 
-	for(a=0; ui[a]==' ' && a<1000; a++);		// skip white spaces
+	// tokens and checkpoints for strtok_r
+	char* cmd_token;
+	char* cmd_token_chkpt = ui;
+	char* word_token;
+	char* word_token_chkpt;
 
-	while(ui[a] != '\0' && a<1000) {
+	// delimeters for parsing multiple commands
+	const char* delim = strdup(";");
+	const char* word_sep = strdup(" ");
 
-		for(b=0; ui[a]!='\0' && ui[a]!=' ' && a<1000; a++, b++)
-			tmp[b] = ui[a];						// extract a word
-	 
-		tmp[b] = '\0';
+	int return_val = 0; // return value of the command(s)
 
-		words[w] = strdup(tmp);
+	// parse user input (ui) into separate commands separated by semi-colons (;)
+	while ((cmd_token = strtok_r(cmd_token_chkpt, delim, &cmd_token_chkpt)) != NULL)
+	{
+		if(strcmp(cmd_token, "\0") == 0 || strcmp(cmd_token, " ") == 0 || strcmp(cmd_token, "") == 0) { 
+			strtok(NULL, delim);
+			continue;
+		}
 
-		a++; 
-		w++;
+		// parse command name and arguments
+		word_token_chkpt = cmd_token;
+		while ((word_token = strtok_r(word_token_chkpt, word_sep, &word_token_chkpt)) != NULL)
+		{
+			words[w++] = strdup(word_token);
+		}
+
+		// call the interpreter
+		return_val = interpreter(words, w);
+		if (return_val) return return_val; // return if there is an error (return_val != 0)
+		
+		w = 0;// reset wordID for the following command
 	}
-
-	return interpreter(words, w);
+	return return_val;
 }
