@@ -82,3 +82,16 @@ char *mem_get_value(char *var_in) {
 	return "Variable does not exist";
 
 }
+
+int check_mem_value_exists(char *var_in) {
+	int i;
+
+	for (i=0; i<1000; i++){
+		if (strcmp(shellmemory[i].var, var_in) == 0){
+
+			return 1;
+		}
+	}
+
+	return 0;
+}
