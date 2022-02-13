@@ -10,6 +10,8 @@ int MAX_ARGS_SIZE = 7;
 int help();
 int quit();
 int badcommand();
+int badcommandTooFewTokens();
+int badcommandTooManyTokens();
 // int set(char* var, char* value);
 int set(char **, int);
 int echo(char* var);
@@ -22,44 +24,45 @@ int badcommandFileDoesNotExist();
 int interpreter(char* command_args[], int args_size){
 	int i;
 
-	if ( args_size < 1 || args_size > MAX_ARGS_SIZE){
-		return badcommand();
-	}
-
-
 	for ( i=0; i<args_size; i++){ //strip spaces new line etc
 		command_args[i][strcspn(command_args[i], "\r\n")] = 0;
 	}
 
+	if (strcmp(command_args[0], "") == 0) return 0;
+
 	if (strcmp(command_args[0], "help")==0){
 	    //help
-	    if (args_size != 1) return badcommand();
+	    if (args_size != 1) return badcommandTooManyTokens();
 	    return help();
 	
 	} else if (strcmp(command_args[0], "quit")==0) {
 		//quit
-		if (args_size != 1) return badcommand();
+		if (args_size != 1) return badcommandTooManyTokens();
 		return quit();
 
 	} else if (strcmp(command_args[0], "set")==0) {
 		//set
-		if (args_size < 3 || args_size > 7) return badcommand();	
+		if (args_size < 3) return badcommandTooFewTokens();
+		if (args_size > 7) return badcommandTooManyTokens();	
 		return set(command_args+1, args_size-1); // pointer to input #2 and beyond (depends on args_size)
 	
 	} else if (strcmp(command_args[0], "print")==0) {
-		if (args_size != 2) return badcommand();
+		if (args_size < 2) return badcommandTooFewTokens();
+		if (args_size > 2) return badcommandTooManyTokens();
 		return print(command_args[1]);
 	
 	} else if (strcmp(command_args[0], "run")==0) {
-		if (args_size != 2) return badcommand();
+		if (args_size < 2) return badcommandTooFewTokens();
+		if (args_size > 2) return badcommandTooManyTokens();
 		return run(command_args[1]);
 	
 	} else if (strcmp(command_args[0], "echo")==0) {
 		// TODO: may need to modify this once enhanced set implemented
-		if (args_size != 2) return badcommand();
+		if (args_size < 2) return badcommandTooFewTokens();
+		if (args_size > 2) return badcommandTooManyTokens();
 		return echo(command_args[1]);
 	} else if (strcmp(command_args[0], "my_ls")==0) {
-		if (args_size != 1) return badcommand();
+		if (args_size != 1) return badcommandTooManyTokens();
 		return myls();
 	} else return badcommand();
 }
@@ -86,9 +89,19 @@ int badcommand(){
 	return 1;
 }
 
+int badcommandTooFewTokens(){
+	printf("%s\n", "Bad Command: Too few tokens");
+	return 2;
+}
+
+int badcommandTooManyTokens(){
+	printf("%s\n", "Bad Command: Too many tokens");
+	return 2;
+}
+
 // For run command only
 int badcommandFileDoesNotExist(){
-	printf("%s\n", "Bad command: File not found");
+	printf("%s\n", "Bad Command: File not found");
 	return 3;
 }
 
