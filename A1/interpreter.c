@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h> // standard header in UNIX for directory traversal
 
 #include "shellmemory.h"
 #include "shell.h"
@@ -172,6 +173,20 @@ int run(char* script){
 }
 
 int myls() {
-	system("ls -1 | sort");
-	return 0;
+	DIR *dir; // directory pointer
+	struct dirent *ent; // directory entry pointer
+
+	if ((dir = opendir("./")) != NULL) { // open the current directory
+	/* print all the files and directories within directory */
+		while ((ent = readdir (dir)) != NULL) {
+			printf ("%s\t", ent->d_name);
+		}
+		printf("\n");
+		closedir(dir);
+		return 0;
+	} else {
+	/* could not open directory */
+		perror("Could not open directory");
+		return 3;
+	}
 }
