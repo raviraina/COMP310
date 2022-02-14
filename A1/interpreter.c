@@ -62,6 +62,7 @@ int interpreter(char* command_args[], int args_size){
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
 		return echo(command_args[1]);
+		
 	} else if (strcmp(command_args[0], "my_ls")==0) {
 		if (args_size != 1) return badcommandTooManyTokens();
 		return myls();
@@ -80,28 +81,28 @@ run SCRIPT.TXT		Executes the file SCRIPT.TXT\n ";
 	return 0;
 }
 
-int quit(){
+int quit() {
 	printf("%s\n", "Bye!");
 	exit(0);
 }
 
-int badcommand(){
+int badcommand() {
 	printf("%s\n", "Unknown Command");
 	return 1;
 }
 
-int badcommandTooFewTokens(){
+int badcommandTooFewTokens() {
 	printf("%s\n", "Bad Command: Too few tokens");
 	return 2;
 }
 
-int badcommandTooManyTokens(){
+int badcommandTooManyTokens() {
 	printf("%s\n", "Bad Command: Too many tokens");
 	return 2;
 }
 
 // For run command only
-int badcommandFileDoesNotExist(){
+int badcommandFileDoesNotExist() {
 	printf("%s\n", "Bad Command: File not found");
 	return 3;
 }
@@ -114,7 +115,7 @@ int set(char* args[], int args_size){
 	
 	strcpy(buffer, args[1]); // copy first token to the buffer
 	
-	for(int i = 2; i < args_size; i++){ //copy remaining tokens to the buffer, if any
+	for(int i = 2; i < args_size; i++){	//copy remaining tokens to the buffer, if any
 		strcat(buffer, " ");
 		strcat(buffer, args[i]);
 	}
@@ -125,13 +126,11 @@ int set(char* args[], int args_size){
 }
 
 int echo(char* var) {
-
 	if (var[0] == '$') {	// check if input is from memory
 		char *varFromMem = var + 1;
 
 		if (check_mem_value_exists(varFromMem)) {	// check for existance
 			print(varFromMem);
-
 		} else {
 			printf("%s\n","");
 		}
@@ -173,20 +172,6 @@ int run(char* script){
 }
 
 int myls() {
-	DIR *dir; // directory pointer
-	struct dirent *ent; // directory entry pointer
-
-	if ((dir = opendir("./")) != NULL) { // open the current directory
-	/* print all the files and directories within directory */
-		while ((ent = readdir (dir)) != NULL) {
-			printf ("%s\t", ent->d_name);
-		}
-		printf("\n");
-		closedir(dir);
-		return 0;
-	} else {
-	/* could not open directory */
-		perror("Could not open directory");
-		return 3;
-	}
+	system("ls -1 | sort");
+	return 0;
 }
