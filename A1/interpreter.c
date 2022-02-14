@@ -1,16 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <string.h>
+#include <dirent.h> // standard header in UNIX for directory traversal
 
 #include "shellmemory.h"
 #include "shell.h"
 
-int MAX_ARGS_SIZE = 3;
+int MAX_ARGS_SIZE = 7;
 
 int help();
 int quit();
 int badcommand();
-int set(char* var, char* value);
+int badcommandTooFewTokens();
+int badcommandTooManyTokens();
+// int set(char* var, char* value);
+int set(char **, int);
+int echo(char* var);
+int myls();
 int print(char* var);
 int run(char* script);
 int badcommandFileDoesNotExist();
@@ -19,38 +25,46 @@ int badcommandFileDoesNotExist();
 int interpreter(char* command_args[], int args_size){
 	int i;
 
-	if ( args_size < 1 || args_size > MAX_ARGS_SIZE){
-		return badcommand();
-	}
-
-
 	for ( i=0; i<args_size; i++){ //strip spaces new line etc
 		command_args[i][strcspn(command_args[i], "\r\n")] = 0;
 	}
 
+	if (strcmp(command_args[0], "") == 0) return 0;
+
 	if (strcmp(command_args[0], "help")==0){
 	    //help
-	    if (args_size != 1) return badcommand();
+	    if (args_size != 1) return badcommandTooManyTokens();
 	    return help();
 	
 	} else if (strcmp(command_args[0], "quit")==0) {
 		//quit
-		if (args_size != 1) return badcommand();
+		if (args_size != 1) return badcommandTooManyTokens();
 		return quit();
 
 	} else if (strcmp(command_args[0], "set")==0) {
 		//set
-		if (args_size != 3) return badcommand();	
-		return set(command_args[1], command_args[2]);
+		if (args_size < 3) return badcommandTooFewTokens();
+		if (args_size > 7) return badcommandTooManyTokens();	
+		return set(command_args+1, args_size-1); // pointer to input #2 and beyond (depends on args_size)
 	
 	} else if (strcmp(command_args[0], "print")==0) {
-		if (args_size != 2) return badcommand();
+		if (args_size < 2) return badcommandTooFewTokens();
+		if (args_size > 2) return badcommandTooManyTokens();
 		return print(command_args[1]);
 	
 	} else if (strcmp(command_args[0], "run")==0) {
-		if (args_size != 2) return badcommand();
+		if (args_size < 2) return badcommandTooFewTokens();
+		if (args_size > 2) return badcommandTooManyTokens();
 		return run(command_args[1]);
 	
+	} else if (strcmp(command_args[0], "echo")==0) {
+		// TODO: may need to modify this once enhanced set implemented
+		if (args_size < 2) return badcommandTooFewTokens();
+		if (args_size > 2) return badcommandTooManyTokens();
+		return echo(command_args[1]);
+	} else if (strcmp(command_args[0], "my_ls")==0) {
+		if (args_size != 1) return badcommandTooManyTokens();
+		return myls();
 	} else return badcommand();
 }
 
@@ -76,24 +90,56 @@ int badcommand(){
 	return 1;
 }
 
+int badcommandTooFewTokens(){
+	printf("%s\n", "Bad Command: Too few tokens");
+	return 2;
+}
+
+int badcommandTooManyTokens(){
+	printf("%s\n", "Bad Command: Too many tokens");
+	return 2;
+}
+
 // For run command only
 int badcommandFileDoesNotExist(){
-	printf("%s\n", "Bad command: File not found");
+	printf("%s\n", "Bad Command: File not found");
 	return 3;
 }
 
-int set(char* var, char* value){
-
-	char *link = "=";
+// param args: array of strings (args[0] := variable name; args[1: args_size] := tokens)
+// param ars_size: length of args
+int set(char* args[], int args_size){
+	char *var = args[0];
 	char buffer[1000];
-	strcpy(buffer, var);
-	strcat(buffer, link);
-	strcat(buffer, value);
+	
+	strcpy(buffer, args[1]); // copy first token to the buffer
+	
+	for(int i = 2; i < args_size; i++){ //copy remaining tokens to the buffer, if any
+		strcat(buffer, " ");
+		strcat(buffer, args[i]);
+	}
 
-	mem_set_value(var, value);
+	mem_set_value(var, buffer);
 
 	return 0;
+}
 
+int echo(char* var) {
+
+	if (var[0] == '$') {	// check if input is from memory
+		char *varFromMem = var + 1;
+
+		if (check_mem_value_exists(varFromMem)) {	// check for existance
+			print(varFromMem);
+
+		} else {
+			printf("%s\n","");
+		}
+
+	} else {
+		printf("%s\n", var);	// normal echo if not referencing memory
+	}
+	return 0;
 }
 
 int print(char* var){
@@ -124,4 +170,23 @@ int run(char* script){
     fclose(p);
 
 	return errCode;
+}
+
+int myls() {
+	DIR *dir; // directory pointer
+	struct dirent *ent; // directory entry pointer
+
+	if ((dir = opendir("./")) != NULL) { // open the current directory
+	/* print all the files and directories within directory */
+		while ((ent = readdir (dir)) != NULL) {
+			printf ("%s\t", ent->d_name);
+		}
+		printf("\n");
+		closedir(dir);
+		return 0;
+	} else {
+	/* could not open directory */
+		perror("Could not open directory");
+		return 3;
+	}
 }
