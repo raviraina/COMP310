@@ -1,6 +1,6 @@
-#include<stdlib.h>
-#include<string.h>
-#include<stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 
 struct memory_struct{
@@ -34,7 +34,6 @@ char *extract(char *model) {
 
 
 // Shell memory functions
-
 void mem_init(){
 
 	int i;
@@ -83,6 +82,7 @@ char *mem_get_value(char *var_in) {
 
 }
 
+// helper method to check memory existance
 int check_mem_value_exists(char *var_in) {
 	int i;
 

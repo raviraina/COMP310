@@ -4,6 +4,7 @@
 #include "interpreter.h"
 #include "shellmemory.h"
 
+// max vars
 const int MAX_USER_INPUT = 1000;
 const int MAX_NUM_COMMANDS = 10;
 
@@ -29,9 +30,9 @@ int main(int argc, char *argv[])
 
 	while (1)
 	{
-		if (feof(stdin))
+		if (feof(stdin))	// check if we're at the end of the input file
 		{
-			freopen("/dev/tty", "r", stdin);
+			freopen("/dev/tty", "r", stdin);	// release control back to user
 		}
 		printf("%c ", prompt);
 		fgets(userInput, MAX_USER_INPUT - 1, stdin);

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h> // standard header in UNIX for directory traversal
 
 #include "shellmemory.h"
 #include "shell.h"
@@ -13,7 +12,6 @@ int quit();
 int badcommand();
 int badcommandTooFewTokens();
 int badcommandTooManyTokens();
-// int set(char* var, char* value);
 int set(char **, int);
 int echo(char* var);
 int myls();
@@ -32,38 +30,41 @@ int interpreter(char* command_args[], int args_size){
 	if (strcmp(command_args[0], "") == 0) return 0;
 
 	if (strcmp(command_args[0], "help")==0){
-	    //help
+	    // help
 	    if (args_size != 1) return badcommandTooManyTokens();
 	    return help();
 	
 	} else if (strcmp(command_args[0], "quit")==0) {
-		//quit
+		// quit
 		if (args_size != 1) return badcommandTooManyTokens();
 		return quit();
 
 	} else if (strcmp(command_args[0], "set")==0) {
-		//set
+		// set
 		if (args_size < 3) return badcommandTooFewTokens();
 		if (args_size > 7) return badcommandTooManyTokens();	
 		return set(command_args+1, args_size-1); // pointer to input #2 and beyond (depends on args_size)
 	
 	} else if (strcmp(command_args[0], "print")==0) {
+		// print
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
 		return print(command_args[1]);
 	
 	} else if (strcmp(command_args[0], "run")==0) {
+		// run
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
 		return run(command_args[1]);
 	
 	} else if (strcmp(command_args[0], "echo")==0) {
-		// TODO: may need to modify this once enhanced set implemented
+		// echo
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
 		return echo(command_args[1]);
 		
 	} else if (strcmp(command_args[0], "my_ls")==0) {
+		// ls
 		if (args_size != 1) return badcommandTooManyTokens();
 		return myls();
 	} else return badcommand();
@@ -91,6 +92,7 @@ int badcommand() {
 	return 1;
 }
 
+// enhanced bad command checkers
 int badcommandTooFewTokens() {
 	printf("%s\n", "Bad Command: Too few tokens");
 	return 2;
@@ -172,6 +174,6 @@ int run(char* script){
 }
 
 int myls() {
-	system("ls -1 | sort");
+	system("ls -1 | sort");	// utilize the system command to list ls sorted alpha
 	return 0;
 }
