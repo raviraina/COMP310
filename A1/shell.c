@@ -79,9 +79,9 @@ int parseInput(char ui[])
 
 		// call the interpreter
 		return_val = interpreter(words, w);
-		if (return_val) return return_val; // return if there is an error (return_val != 0)
 		
-		w = 0;// reset wordID for the following command
+		// reset wordID for the following command
+		w = 0;
 	}
 	return return_val;
 }
