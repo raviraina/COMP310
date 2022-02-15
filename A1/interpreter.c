@@ -175,14 +175,37 @@ int run(char* script){
 int myls() {
 	DIR *dir; // directory pointer
 	struct dirent *ent; // directory entry pointer
+	int total_dirs = 100;
+	char **dirs = (char **) calloc(total_dirs, 100 * sizeof(char)); // array of file/directory names inside the current directory
+	char tmp[100];
+	int n = 0; // number of files/directories in the current directory
 
 	if ((dir = opendir("./")) != NULL) { // open the current directory
-	/* print all the files and directories within directory */
 		while ((ent = readdir (dir)) != NULL) {
-			printf ("%s\t", ent->d_name);
+			if(n >= total_dirs) {
+				total_dirs += 100;
+				dirs = (char **) realloc(dirs, total_dirs * 100 * sizeof(char));
+			}
+			dirs[n++] = strdup(ent->d_name);
 		}
-		printf("\n");
 		closedir(dir);
+
+		// sort the dir names using bubble sort (desc)
+		for(int i=0; i<n; i++){
+			for(int j=0; j<n-1-i; j++){
+				if(strcasecmp(dirs[j], dirs[j+1]) < 0){ //< was originally >
+					//swap array[j] and array[j+1]
+					strcpy(tmp, dirs[j]);
+					strcpy(dirs[j], dirs[j+1]);
+					strcpy(dirs[j+1], tmp);
+				}
+			}
+		}
+
+		// print the sorted dir names
+		while(n-->0){
+			printf("%s\n", dirs[n]);
+		}
 		return 0;
 	} else {
 	/* could not open directory */
