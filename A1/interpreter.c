@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <dirent.h> // standard header in UNIX for directory traversal
 
 #include "shellmemory.h"
 #include "shell.h"
@@ -12,6 +13,7 @@ int quit();
 int badcommand();
 int badcommandTooFewTokens();
 int badcommandTooManyTokens();
+// int set(char* var, char* value);
 int set(char **, int);
 int echo(char* var);
 int myls();
@@ -30,41 +32,37 @@ int interpreter(char* command_args[], int args_size){
 	if (strcmp(command_args[0], "") == 0) return 0;
 
 	if (strcmp(command_args[0], "help")==0){
-	    // help
+	    //help
 	    if (args_size != 1) return badcommandTooManyTokens();
 	    return help();
 	
 	} else if (strcmp(command_args[0], "quit")==0) {
-		// quit
+		//quit
 		if (args_size != 1) return badcommandTooManyTokens();
 		return quit();
 
 	} else if (strcmp(command_args[0], "set")==0) {
-		// set
+		//set
 		if (args_size < 3) return badcommandTooFewTokens();
 		if (args_size > 7) return badcommandTooManyTokens();	
 		return set(command_args+1, args_size-1); // pointer to input #2 and beyond (depends on args_size)
 	
 	} else if (strcmp(command_args[0], "print")==0) {
-		// print
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
 		return print(command_args[1]);
 	
 	} else if (strcmp(command_args[0], "run")==0) {
-		// run
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
 		return run(command_args[1]);
 	
 	} else if (strcmp(command_args[0], "echo")==0) {
-		// echo
+		// TODO: may need to modify this once enhanced set implemented
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
 		return echo(command_args[1]);
-		
 	} else if (strcmp(command_args[0], "my_ls")==0) {
-		// ls
 		if (args_size != 1) return badcommandTooManyTokens();
 		return myls();
 	} else return badcommand();
@@ -82,29 +80,28 @@ run SCRIPT.TXT		Executes the file SCRIPT.TXT\n ";
 	return 0;
 }
 
-int quit() {
+int quit(){
 	printf("%s\n", "Bye!");
 	exit(0);
 }
 
-int badcommand() {
+int badcommand(){
 	printf("%s\n", "Unknown Command");
 	return 1;
 }
 
-// enhanced bad command checkers
-int badcommandTooFewTokens() {
+int badcommandTooFewTokens(){
 	printf("%s\n", "Bad Command: Too few tokens");
 	return 2;
 }
 
-int badcommandTooManyTokens() {
+int badcommandTooManyTokens(){
 	printf("%s\n", "Bad Command: Too many tokens");
 	return 2;
 }
 
 // For run command only
-int badcommandFileDoesNotExist() {
+int badcommandFileDoesNotExist(){
 	printf("%s\n", "Bad Command: File not found");
 	return 3;
 }
@@ -117,7 +114,7 @@ int set(char* args[], int args_size){
 	
 	strcpy(buffer, args[1]); // copy first token to the buffer
 	
-	for(int i = 2; i < args_size; i++){	//copy remaining tokens to the buffer, if any
+	for(int i = 2; i < args_size; i++){ //copy remaining tokens to the buffer, if any
 		strcat(buffer, " ");
 		strcat(buffer, args[i]);
 	}
@@ -128,11 +125,13 @@ int set(char* args[], int args_size){
 }
 
 int echo(char* var) {
+
 	if (var[0] == '$') {	// check if input is from memory
 		char *varFromMem = var + 1;
 
 		if (check_mem_value_exists(varFromMem)) {	// check for existance
 			print(varFromMem);
+
 		} else {
 			printf("%s\n","");
 		}
@@ -174,6 +173,43 @@ int run(char* script){
 }
 
 int myls() {
-	system("ls -1 | sort");	// utilize the system command to list ls sorted alpha
-	return 0;
+	DIR *dir; // directory pointer
+	struct dirent *ent; // directory entry pointer
+	int total_dirs = 100;
+	char **dirs = (char **) calloc(total_dirs, 100 * sizeof(char)); // array of file/directory names inside the current directory
+	char tmp[100];
+	int n = 0; // number of files/directories in the current directory
+
+	if ((dir = opendir("./")) != NULL) { // open the current directory
+		while ((ent = readdir (dir)) != NULL) {
+			if(n >= total_dirs) {
+				total_dirs += 100;
+				dirs = (char **) realloc(dirs, total_dirs * 100 * sizeof(char));
+			}
+			dirs[n++] = strdup(ent->d_name);
+		}
+		closedir(dir);
+
+		// sort the dir names using bubble sort (desc)
+		for(int i=0; i<n; i++){
+			for(int j=0; j<n-1-i; j++){
+				if(strcasecmp(dirs[j], dirs[j+1]) < 0){ //< was originally >
+					//swap array[j] and array[j+1]
+					strcpy(tmp, dirs[j]);
+					strcpy(dirs[j], dirs[j+1]);
+					strcpy(dirs[j+1], tmp);
+				}
+			}
+		}
+
+		// print the sorted dir names
+		while(n-->0){
+			printf("%s\n", dirs[n]);
+		}
+		return 0;
+	} else {
+	/* could not open directory */
+		perror("Could not open directory");
+		return 3;
+	}
 }
