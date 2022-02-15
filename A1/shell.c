@@ -66,7 +66,6 @@ int parseInput(char ui[])
 	while ((cmd_token = strtok_r(cmd_token_chkpt, delim, &cmd_token_chkpt)) != NULL)
 	{
 		if(strcmp(cmd_token, "\0") == 0 || strcmp(cmd_token, " ") == 0 || strcmp(cmd_token, "") == 0) { 
-			strtok(NULL, delim);
 			continue;
 		}
 
