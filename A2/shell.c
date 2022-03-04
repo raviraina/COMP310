@@ -3,6 +3,8 @@
 #include <string.h> 
 #include "interpreter.h"
 #include "shellmemory.h"
+#include "pcb.h"
+#include "readyqueue.h"
 
 // max vars
 const int MAX_USER_INPUT = 1000;
@@ -14,7 +16,7 @@ int parseInput(char ui[]);
 int main(int argc, char *argv[])
 {
 
-	printf("%s\n", "Shell version 1.1 Created January 2022");
+	printf("%s\n", "Shell version 1.2 Created March 2022");
 	help();
 
 	char prompt = '$';				// Shell prompt
@@ -27,6 +29,9 @@ int main(int argc, char *argv[])
 
 	// init shell memory
 	mem_init();
+
+	//init ready queue
+	rq_t *rq = init_rq();
 
 	while (1)
 	{

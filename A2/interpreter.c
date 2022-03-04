@@ -119,7 +119,7 @@ int set(char* args[], int args_size){
 		strcat(buffer, args[i]);
 	}
 
-	mem_set_value(var, buffer);
+	mem_set_value(var, buffer, NULL);
 
 	return 0;
 }
@@ -129,7 +129,7 @@ int echo(char* var) {
 	if (var[0] == '$') {	// check if input is from memory
 		char *varFromMem = var + 1;
 
-		if (check_mem_value_exists(varFromMem)) {	// check for existance
+		if (check_mem_value_exists(varFromMem, NULL)) {	// check for existance
 			print(varFromMem);
 
 		} else {
@@ -143,7 +143,7 @@ int echo(char* var) {
 }
 
 int print(char* var){
-	printf("%s\n", mem_get_value(var)); 
+	printf("%s\n", mem_get_value(var, NULL)); 
 	return 0;
 }
 
