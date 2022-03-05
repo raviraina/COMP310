@@ -107,8 +107,8 @@ int check_mem_value_exists(char *var_in, pcb_t *pcb) {
 // returns -1 if error, 0 if success
 int mem_load_script_line(int pid, int line_number, char *script_line, struct memory_struct *mem) {
 	int i;
-	char key[6];
-	if(snprintf(key, 6, "%d-%d", pid, line_number) < 0) { 
+	char key[10];
+	if(snprintf(key, 10, "%d-%d", pid, line_number) < 0) { 
 		printf("Error: unable to load line %d of process %d\n", line_number, pid);
 		return -1;
 	}

@@ -10,6 +10,7 @@ rq_t *init_rq() {
     rq->head = NULL;
     rq->tail = NULL;
     rq->curr = rq->head;
+    rq->size = 0;
     return rq;
 }
 
@@ -23,6 +24,7 @@ void add_rq_tail(rq_t *rq, pcb_t *pcb) {
         rq->tail->next = pcb;
         rq->tail = pcb;
     }
+    rq->size++;
 }
 
 
@@ -31,5 +33,6 @@ pcb_t *pop_rq_head(rq_t *rq) {
     if (rq->head == NULL) return NULL;
     pcb_t *head = rq->head;
     rq->head = rq->head->next;
+    rq->size--;
     return head;
 } 

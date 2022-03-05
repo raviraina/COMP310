@@ -7,6 +7,7 @@ typedef struct ready_queue {
     pcb_t *head;
     pcb_t *tail;
     pcb_t *curr;
+    int size;
 } rq_t;
 
 rq_t *init_rq();
