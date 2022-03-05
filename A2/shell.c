@@ -10,7 +10,7 @@
 const int MAX_USER_INPUT = 1000;
 const int MAX_NUM_COMMANDS = 10;
 
-int parseInput(char ui[]);
+int parseInput(char ui[], pcb_t *pcb, rq_t *rq);
 
 // Start of everything
 int main(int argc, char *argv[])
@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 		}
 		printf("%c ", prompt);
 		fgets(userInput, MAX_USER_INPUT - 1, stdin);
-		errorCode = parseInput(userInput);
+		errorCode = parseInput(userInput, NULL, rq); // direct commands from shell are not executed as a process
 		if (errorCode == -1)
 			exit(99); // ignore all other errors
 		memset(userInput, 0, sizeof(userInput));
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 }
 
 // Extract words from the input then call interpreter
-int parseInput(char ui[])
+int parseInput(char ui[], pcb_t *pcb, rq_t *rq)
 {
 	char *words[100]; // holds parsed commands and arguments until they are sent to the interpreter
 	int w = 0; // wordID -- number of words in the user input (in each command)
@@ -84,7 +84,7 @@ int parseInput(char ui[])
 		}
 
 		// call the interpreter
-		return_val = interpreter(words, w);
+		return_val = interpreter(words, w, pcb, rq);
 		
 		// reset wordID for the following command
 		w = 0;

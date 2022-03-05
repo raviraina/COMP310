@@ -15,7 +15,7 @@ rq_t *init_rq() {
 
 
 // adds a PCB to the ready queue
-void add_pcb(rq_t *rq, pcb_t *pcb) {
+void add_rq_tail(rq_t *rq, pcb_t *pcb) {
     if (rq->head == NULL) {
         rq->head = pcb;
         rq->tail = pcb;

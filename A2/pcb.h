@@ -1,8 +1,6 @@
 #ifndef PCB_H
 #define PCB_H
 
-#include "shellmemory.h"
-
 typedef struct pcb {
     int pid; // unique pid of process.
     struct memory_struct *base; // pointer to beginning of memory block where the script is stored.

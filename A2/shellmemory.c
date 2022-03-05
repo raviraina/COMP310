@@ -129,7 +129,7 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 	pcb->size = 0;
 	while(fgets(line, 1000, script) != NULL)
 		pcb->size++;
-	
+
 	// get back to the beginning of script
 	rewind(script); 
 
@@ -140,12 +140,13 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 		// find an empty spot
 		if (strcmp(shellmemory[i].var, "none") == 0) {
 			// now check whether the next script_size spots are also empty
-			for (j = i+1; j < pcb->size; j++) {
+			for (j = i+1; j < (100 + pcb->size); j++) {
 				if (strcmp(shellmemory[j].var, "none") != 0) {
 					i = j+1;
 					break;
 				}
 			}
+
 			if (i < j) { // found a spot
 				//update pcb base
 				pcb->base = &shellmemory[base];
@@ -166,7 +167,7 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 
 
 int mem_cleanup_script(pcb_t *pcb) {
-	char* pid_s, var;
+	char *pid_s, *var;
 	int pid;
 	// clean up script from shell memory
 	for (int i = 0; i < pcb->size; i++) {
@@ -176,11 +177,12 @@ int mem_cleanup_script(pcb_t *pcb) {
 
 	// clean up script variables from shell memory
 	for (int i = 0; i < 100; i++) {
-		sscanf(shellmemory[i].var, "%d-%s", pid_s, var);
+		sscanf(shellmemory[i].var, "%s-%s", pid_s, var);
 		pid = atoi(pid_s);
 		if (pcb->pid == pid) {
 			shellmemory[i].var = "none";
 			shellmemory[i].value = "none";
 		}
 	}
+	return 0;
 }

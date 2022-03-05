@@ -1,6 +1,8 @@
 #ifndef SHELLMEMORY_H
 #define SHELLMEMORY_H
 
+#include "pcb.h"
+
 struct memory_struct{
 	char *var;
 	char *value;

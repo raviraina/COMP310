@@ -5,8 +5,12 @@
 
 #include "shellmemory.h"
 #include "shell.h"
+#include "pcb.h"
+#include "readyqueue.h"
+#include "scheduler.h"
 
 int MAX_ARGS_SIZE = 7;
+int CURR_PID = 0;
 
 int help();
 int quit();
@@ -14,15 +18,15 @@ int badcommand();
 int badcommandTooFewTokens();
 int badcommandTooManyTokens();
 // int set(char* var, char* value);
-int set(char **, int);
-int echo(char* var);
+int set(char **, int, pcb_t* pcb);
+int echo(char* var, pcb_t *pcb);
 int myls();
-int print(char* var);
-int run(char* script);
+int print(char* var, pcb_t *pcb);
+int run(char* script, rq_t *rq);
 int badcommandFileDoesNotExist();
 
 // Interpret commands and their arguments
-int interpreter(char* command_args[], int args_size){
+int interpreter(char* command_args[], int args_size, pcb_t *pcb, rq_t *rq){
 	int i;
 
 	for ( i=0; i<args_size; i++){ //strip spaces new line etc
@@ -45,23 +49,23 @@ int interpreter(char* command_args[], int args_size){
 		//set
 		if (args_size < 3) return badcommandTooFewTokens();
 		if (args_size > 7) return badcommandTooManyTokens();	
-		return set(command_args+1, args_size-1); // pointer to input #2 and beyond (depends on args_size)
+		return set(command_args+1, args_size-1, pcb); // pointer to input #2 and beyond (depends on args_size)
 	
 	} else if (strcmp(command_args[0], "print")==0) {
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
-		return print(command_args[1]);
+		return print(command_args[1], pcb);
 	
 	} else if (strcmp(command_args[0], "run")==0) {
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
-		return run(command_args[1]);
+		return run(command_args[1], rq);
 	
 	} else if (strcmp(command_args[0], "echo")==0) {
 		// TODO: may need to modify this once enhanced set implemented
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
-		return echo(command_args[1]);
+		return echo(command_args[1], pcb);
 	} else if (strcmp(command_args[0], "my_ls")==0) {
 		if (args_size != 1) return badcommandTooManyTokens();
 		return myls();
@@ -108,7 +112,7 @@ int badcommandFileDoesNotExist(){
 
 // param args: array of strings (args[0] := variable name; args[1: args_size] := tokens)
 // param ars_size: length of args
-int set(char* args[], int args_size){
+int set(char* args[], int args_size, pcb_t *pcb){
 	char *var = args[0];
 	char buffer[1000];
 	
@@ -119,18 +123,18 @@ int set(char* args[], int args_size){
 		strcat(buffer, args[i]);
 	}
 
-	mem_set_value(var, buffer, NULL);
+	mem_set_value(var, buffer, pcb);
 
 	return 0;
 }
 
-int echo(char* var) {
+int echo(char* var, pcb_t *pcb) {
 
 	if (var[0] == '$') {	// check if input is from memory
 		char *varFromMem = var + 1;
 
-		if (check_mem_value_exists(varFromMem, NULL)) {	// check for existance
-			print(varFromMem);
+		if (check_mem_value_exists(varFromMem, pcb)) {	// check for existance
+			print(varFromMem, pcb);
 
 		} else {
 			printf("%s\n","");
@@ -142,34 +146,62 @@ int echo(char* var) {
 	return 0;
 }
 
-int print(char* var){
-	printf("%s\n", mem_get_value(var, NULL)); 
+int print(char* var, pcb_t *pcb){
+	printf("%s\n", mem_get_value(var, pcb)); 
 	return 0;
 }
 
-int run(char* script){
-	int errCode = 0;
-	char line[1000];
-	FILE *p = fopen(script,"rt");  // the program is in a file
+int run(char* script, rq_t *rq){
+	// int errCode = 0;
+	// char line[1000];
+	// FILE *p = fopen(script,"rt");  // the program is in a file
 
-	if(p == NULL){
+	// if(p == NULL){
+	// 	return badcommandFileDoesNotExist();
+	// }
+
+	// fgets(line,999,p);
+	// while(1){
+	// 	errCode = parseInput(line, NULL);	// which calls interpreter()
+	// 	memset(line, 0, sizeof(line));
+
+	// 	if(feof(p)){
+	// 		break;
+	// 	}
+	// 	fgets(line,999,p);
+	// }
+
+    // fclose(p);
+
+	// return errCode;
+	pcb_t *pcb = malloc(sizeof(pcb_t));
+
+	if (pcb == NULL) {
+		printf("%s\n", "Error: malloc failed");
+		return -1;
+	}
+
+	FILE *fp = fopen(script, "rt"); // the program is in a file
+
+	if (fp == NULL) {
 		return badcommandFileDoesNotExist();
 	}
 
-	fgets(line,999,p);
-	while(1){
-		errCode = parseInput(line);	// which calls interpreter()
-		memset(line, 0, sizeof(line));
+	// initiate a pcb for the script
+	pcb->pid = CURR_PID++;
+	pcb->next = NULL;
 
-		if(feof(p)){
-			break;
-		}
-		fgets(line,999,p);
-	}
+	// add pcb to the ready queue
+	add_rq_tail(rq, pcb);
 
-    fclose(p);
+	// load script into memory
+	mem_load_script(fp, pcb);
 
-	return errCode;
+	// close the script
+	fclose(fp);
+
+	// let the scheduler execute the script(s) in the ready queue
+	return FCFS_scheduler(rq);
 }
 
 int myls() {
