@@ -15,8 +15,9 @@ int execute_command(pcb_t *pcb, rq_t *rq) {
 
 // helper function to compare two PCBs according to their size for SJF scheduler
 int compare_pcb_size(const void *a, const void *b) {
-    pcb_t *pcb1 = (pcb_t *)a;
-    pcb_t *pcb2 = (pcb_t *)b;
+    pcb_t *pcb1 = *(pcb_t **) a;
+    pcb_t *pcb2 = *(pcb_t **) b;
+
     return pcb1->size - pcb2->size;
 }
 
@@ -28,7 +29,7 @@ int FCFS_scheduler(rq_t *rq) {
 
     // execute all processes in the ready queue one-by-one (FCFS)
     while ((rq_head = pop_rq_head(rq)) != NULL) {
-        printf("Script size = %d\n", rq_head->size);
+        // printf("Script size = %d\n", rq_head->size);
         // execute the process line-by-line
         for (int i = 0; i < rq_head->size; i++) {
             err = execute_command(rq_head, rq);
@@ -52,12 +53,21 @@ int SJF_scheduler(rq_t *rq) {
     while((rq_head = pop_rq_head(rq)) != NULL) {
         pcb_array[i++] = rq_head;
     }
+    
     qsort(pcb_array, i, sizeof(pcb_t *), compare_pcb_size);
 
+
+
     // add the sorted PCBs back to the ready queue
-    for (int j = 0; j < i; j++) {
-        add_rq_tail(rq, pcb_array[j]);
+    i--;
+    while(i-- > 0) {
+        add_rq_tail(rq, pcb_array[i]);
     }
+
+    // for (int j = 0; j < i; j++) {
+        
+    // }
+    // free(pcb_array);
 
     // execute all processes like FCFS
     return FCFS_scheduler(rq);

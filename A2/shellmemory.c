@@ -115,6 +115,7 @@ int mem_load_script_line(int pid, int line_number, char *script_line, struct mem
 	}
 	mem->var = strdup(key);
 	mem->value = strdup(script_line);
+	// printf("var: %s, value: %s\n", mem->var, mem->value);
 	return 0;
 }
 
@@ -141,7 +142,7 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 		// find an empty spot
 		if (strcmp(shellmemory[i].var, "none") == 0) {
 			// now check whether the next script_size spots are also empty
-			for (j = i+1; j < (100 + pcb->size); j++) {
+			for (j = i+1; j < (i + pcb->size); j++) {
 				if (strcmp(shellmemory[j].var, "none") != 0) {
 					i = j+1;
 					break;
