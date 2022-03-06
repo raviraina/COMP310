@@ -28,7 +28,6 @@ int FCFS_scheduler(rq_t *rq) {
 
     // execute all processes in the ready queue one-by-one (FCFS)
     while ((rq_head = pop_rq_head(rq)) != NULL) {
-        printf("Script size = %d\n", rq_head->size);
         // execute the process line-by-line
         for (int i = 0; i < rq_head->size; i++) {
             err = execute_command(rq_head, rq);
