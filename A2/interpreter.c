@@ -14,7 +14,7 @@ int CURR_PID = 0;
 
 int help();
 int quit();
-int badcommand();
+int badcommand(char* command_args[], int args_size);
 int badcommandTooFewTokens();
 int badcommandTooManyTokens();
 // int set(char* var, char* value);
@@ -23,6 +23,7 @@ int echo(char* var, pcb_t *pcb);
 int myls();
 int print(char* var, pcb_t *pcb);
 int run(char* script, rq_t *rq);
+int exec(char **, int args_size, char* policy, rq_t *rq);
 int badcommandFileDoesNotExist();
 
 // Interpret commands and their arguments
@@ -69,7 +70,11 @@ int interpreter(char* command_args[], int args_size, pcb_t *pcb, rq_t *rq){
 	} else if (strcmp(command_args[0], "my_ls")==0) {
 		if (args_size != 1) return badcommandTooManyTokens();
 		return myls();
-	} else return badcommand();
+	} else if (strcmp(command_args[0], "exec")==0) {
+		if (args_size < 3) return badcommandTooFewTokens();
+		if (args_size > 5) return badcommandTooManyTokens();
+		return exec(command_args+1, args_size-2, command_args[args_size - 1], rq);
+	} else return badcommand(command_args, args_size);
 }
 
 int help(){
@@ -89,7 +94,11 @@ int quit(){
 	exit(0);
 }
 
-int badcommand(){
+int badcommand(char* command_args[], int args_size){
+	printf("%d", args_size);
+	for (int i = 0; i < args_size; i++) {
+		printf("%s", command_args[i]);
+	}
 	printf("%s\n", "Unknown Command");
 	return 1;
 }
@@ -244,4 +253,55 @@ int myls() {
 		perror("Could not open directory");
 		return 3;
 	}
+}
+
+int exec(char* args[], int args_size, char* policy, rq_t *rq) {
+	
+	// check for duplicate args
+	for (int i = 0; i < args_size; i++) {
+		for (int j = i + 1; j < args_size; j++) {
+			if (strcmp(args[i],args[j]) == 0) {
+				printf("%s\n", "Incorrect usage: Filenames must be different.");
+				return 1;
+			}
+		}
+	}
+
+	// case if only 1 prog (FCFS through run)
+	if (args_size == 1) {
+			run(args[0], rq);
+			return 0;
+	}
+
+	// load pcb, rq
+	for (int i = 0; i < args_size; i++) {
+		FILE *fp = fopen(args[i], "rt");
+		
+		if (fp == NULL) {
+			return badcommandFileDoesNotExist();
+		}
+
+		pcb_t *pcb = malloc(sizeof(pcb_t));
+
+		pcb->pid = CURR_PID++;
+		pcb->next = NULL;
+
+		add_rq_tail(rq, pcb);
+		mem_load_script(fp, pcb);
+		fclose(fp);
+	}
+
+	if (strcmp(policy, "SJF") == 0) {
+		return SJF_scheduler(rq);
+	} else if (strcmp(policy, "RR") == 0) {
+			return RR_scheduler(rq);
+	} else if (strcmp(policy, "AGING") == 0) {
+		return AGING_scheduler(rq);
+	} else if (strcmp(policy, "FCFS") == 0) {
+		return FCFS_scheduler(rq);
+	} else {
+		printf("%s", "Invalid policy type. Choose from 'FCFS', 'SJF', 'RR', or 'AGING'");
+	}
+
+	return 0;
 }
