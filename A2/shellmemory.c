@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <regex.h>
 #include "shellmemory.h"
 #include "pcb.h"
 
@@ -156,7 +157,7 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 				while(fgets(line, 1000, script) != NULL && base < j) {
 					if(mem_load_script_line(pcb->pid, line_num++, line, &shellmemory[base++]) != 0)
 						return -1;
-				}			
+				}		
 				return 0;
 			}
 		}
@@ -167,22 +168,33 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 
 
 int mem_cleanup_script(pcb_t *pcb) {
-	char *pid_s, *var;
+	char *var;
 	int pid;
+	
 	// clean up script from shell memory
 	for (int i = 0; i < pcb->size; i++) {
 		(pcb->base + i)->var = "none";
 		(pcb->base + i)->value = "none";
 	}
 
+	// create regex to identify variables associated with a process
+	regex_t re;
+	regcomp(&re, "^[0-9]+-[a-zA-Z0-9]+$", 0);
+
 	// clean up script variables from shell memory
 	for (int i = 0; i < 100; i++) {
-		sscanf(shellmemory[i].var, "%s-%s", pid_s, var);
-		pid = atoi(pid_s);
-		if (pcb->pid == pid) {
-			shellmemory[i].var = "none";
-			shellmemory[i].value = "none";
+		if (regexec(&re, shellmemory[i].var, 0, NULL, 0) == 0) {
+			sscanf(shellmemory[i].var, "%d-%s", &pid, var);
+			// check if the variable is associated with the given process
+			if (pcb->pid == pid) {
+				shellmemory[i].var = "none";
+				shellmemory[i].value = "none";
+			}
 		}
 	}
+
+	// free the memory allocated to pcb
+	free(pcb);
+
 	return 0;
 }

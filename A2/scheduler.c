@@ -8,9 +8,9 @@
 
 
 // helper function to execute a line in the process
-int execute_command(char *cmd, pcb_t *pcb, rq_t *rq) {
+int execute_command(pcb_t *pcb, rq_t *rq) {
     // pass the stuff to parseInput function ????
-    return parseInput(cmd, pcb, rq);
+    return parseInput(pcb->pc->value, pcb, rq);
 }
 
 // helper function to compare two PCBs according to their size for SJF scheduler
@@ -28,9 +28,10 @@ int FCFS_scheduler(rq_t *rq) {
 
     // execute all processes in the ready queue one-by-one (FCFS)
     while ((rq_head = pop_rq_head(rq)) != NULL) {
+        printf("Script size = %d\n", rq_head->size);
         // execute the process line-by-line
         for (int i = 0; i < rq_head->size; i++) {
-            err = execute_command(rq_head->pc->value, rq_head, rq);
+            err = execute_command(rq_head, rq);
             rq_head->pc ++;
         }
 
@@ -66,7 +67,25 @@ int SJF_scheduler(rq_t *rq) {
 // Runs the processes in the ready queue according to RR scheduling policy
 // Note: To make things simpler, in this assignment one-liners are considered as a single instruction.
 int RR_scheduler(rq_t *rq) {
-    return 0;
+    int err = 0;
+    pcb_t *rq_head;
+    
+    while ((rq_head = pop_rq_head(rq)) != NULL) {   
+        // execute two instructions of the process
+        for (int i =  0; (i < 2) && (rq_head->pc <= (rq_head->base + rq_head->size - 1)); i++) {
+            err = execute_command(rq_head, rq);
+            rq_head->pc ++;
+        }
+
+        if (rq_head->pc < (rq_head->base + rq_head->size - 1)) {
+            // add the process back to the ready queue (waiting state)
+            add_rq_tail(rq, rq_head);
+        } else {
+            // cleanup the current process
+            mem_cleanup_script(rq_head);
+        }
+    }
+    return err;
 }
 
 

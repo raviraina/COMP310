@@ -9,7 +9,6 @@ rq_t *init_rq() {
     rq_t *rq = malloc(sizeof(rq_t));
     rq->head = NULL;
     rq->tail = NULL;
-    rq->curr = rq->head;
     rq->size = 0;
     return rq;
 }
@@ -36,3 +35,24 @@ pcb_t *pop_rq_head(rq_t *rq) {
     rq->size--;
     return head;
 } 
+
+
+// removes the PCB with given PID from the ready queue
+pcb_t *remove_pcb(rq_t *rq, pcb_t *pcb) {
+    if (rq->head == NULL) return NULL;
+    if (rq->head == pcb) {
+        rq->head = rq->head->next;
+        rq->size--;
+        return pcb;
+    }
+    pcb_t *curr = rq->head;
+    while (curr->next != NULL) {
+        if (curr->next == pcb) {
+            curr->next = curr->next->next;
+            rq->size--;
+            return pcb;
+        }
+        curr = curr->next;
+    }
+    return NULL;
+}

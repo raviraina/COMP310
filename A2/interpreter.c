@@ -133,7 +133,7 @@ int echo(char* var, pcb_t *pcb) {
 	if (var[0] == '$') {	// check if input is from memory
 		char *varFromMem = var + 1;
 
-		if (check_mem_value_exists(varFromMem, pcb)) {	// check for existance
+		if (check_mem_value_exists(varFromMem, pcb)) {	// check for existence
 			print(varFromMem, pcb);
 
 		} else {
@@ -201,7 +201,7 @@ int run(char* script, rq_t *rq){
 	fclose(fp);
 
 	// let the scheduler execute the script(s) in the ready queue
-	return FCFS_scheduler(rq);
+	return RR_scheduler(rq);
 }
 
 int myls() {
