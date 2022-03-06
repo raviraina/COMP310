@@ -24,7 +24,7 @@ int myls();
 int print(char* var, pcb_t *pcb);
 int run(char* script, rq_t *rq);
 int exec(char **, int args_size, char* policy, rq_t *rq);
-int badcommandFileDoesNotExist();
+int badcommandFileDoesNotExist(char *);
 
 // Interpret commands and their arguments
 int interpreter(char* command_args[], int args_size, pcb_t *pcb, rq_t *rq){
@@ -114,8 +114,8 @@ int badcommandTooManyTokens(){
 }
 
 // For run command only
-int badcommandFileDoesNotExist(){
-	printf("%s\n", "Bad Command: File not found");
+int badcommandFileDoesNotExist(char *file){
+	printf("Bad command: file %s not found\n", file);
 	return 3;
 }
 
@@ -161,28 +161,6 @@ int print(char* var, pcb_t *pcb){
 }
 
 int run(char* script, rq_t *rq){
-	// int errCode = 0;
-	// char line[1000];
-	// FILE *p = fopen(script,"rt");  // the program is in a file
-
-	// if(p == NULL){
-	// 	return badcommandFileDoesNotExist();
-	// }
-
-	// fgets(line,999,p);
-	// while(1){
-	// 	errCode = parseInput(line, NULL);	// which calls interpreter()
-	// 	memset(line, 0, sizeof(line));
-
-	// 	if(feof(p)){
-	// 		break;
-	// 	}
-	// 	fgets(line,999,p);
-	// }
-
-    // fclose(p);
-
-	// return errCode;
 	pcb_t *pcb = malloc(sizeof(pcb_t));
 
 	if (pcb == NULL) {
@@ -193,7 +171,7 @@ int run(char* script, rq_t *rq){
 	FILE *fp = fopen(script, "rt"); // the program is in a file
 
 	if (fp == NULL) {
-		return badcommandFileDoesNotExist();
+		return badcommandFileDoesNotExist(script);
 	}
 
 	// initiate a pcb for the script
@@ -269,8 +247,7 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 
 	// case if only 1 prog (FCFS through run)
 	if (args_size == 1) {
-			run(args[0], rq);
-			return 0;
+			return run(args[0], rq);
 	}
 
 	// load pcb, rq
@@ -278,7 +255,7 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 		FILE *fp = fopen(args[i], "rt");
 		
 		if (fp == NULL) {
-			return badcommandFileDoesNotExist();
+			return badcommandFileDoesNotExist(args[i]);
 		}
 
 		pcb_t *pcb = malloc(sizeof(pcb_t));

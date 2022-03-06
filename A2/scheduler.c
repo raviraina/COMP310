@@ -79,7 +79,7 @@ int RR_scheduler(rq_t *rq) {
             rq_head->pc ++;
         }
 
-        if (rq_head->pc < (rq_head->base + rq_head->size - 1)) {
+        if (rq_head->pc <= (rq_head->base + rq_head->size - 1)) {
             // add the process back to the ready queue (waiting state)
             add_rq_tail(rq, rq_head);
         } else {
