@@ -33,6 +33,7 @@ pcb_t *pop_rq_head(rq_t *rq) {
     pcb_t *head = rq->head;
     rq->head = rq->head->next;
     rq->size--;
+    head->next = NULL;
     return head;
 } 
 
