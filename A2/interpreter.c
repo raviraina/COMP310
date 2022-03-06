@@ -275,7 +275,6 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 
 	// load pcb, rq
 	for (int i = 0; i < args_size; i++) {
-		// printf("%s", args[i]);
 		FILE *fp = fopen(args[i], "rt");
 		
 		if (fp == NULL) {
