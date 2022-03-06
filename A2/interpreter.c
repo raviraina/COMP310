@@ -257,12 +257,23 @@ int myls() {
 
 int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 	
+	// check for duplicate args
+	for (int i = 0; i < args_size; i++) {
+		for (int j = i + 1; j < args_size; j++) {
+			if (strcmp(args[i],args[j]) == 0) {
+				printf("%s\n", "Incorrect usage: Filenames must be different.");
+				return 1;
+			}
+		}
+	}
+
 	// case if only 1 prog (FCFS through run)
 	if (args_size == 1) {
 			run(args[0], rq);
 			return 0;
 	}
 
+	// load pcb, rq
 	for (int i = 0; i < args_size; i++) {
 		// printf("%s", args[i]);
 		FILE *fp = fopen(args[i], "rt");
@@ -282,18 +293,14 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 	}
 
 	if (strcmp(policy, "SJF") == 0) {
-			// SJF policy
 		return SJF_scheduler(rq);
 	} else if (strcmp(policy, "RR") == 0) {
-			// RR policy 
 			return RR_scheduler(rq);
 	} else if (strcmp(policy, "AGING") == 0) {
-			// AGING policy
-			printf("%s", "AG");
+		return AGING_scheduler(rq);
 	} else if (strcmp(policy, "FCFS") == 0) {
 		return FCFS_scheduler(rq);
-	} 
-	else {
+	} else {
 		printf("%s", "Invalid policy type. Choose from 'FCFS', 'SJF', 'RR', or 'AGING'");
 	}
 
