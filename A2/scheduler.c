@@ -120,39 +120,15 @@ int AGING_scheduler(rq_t *rq) {
 
     // start executing processes
     while((rq_head = pop_rq_head(rq)) != NULL) {
-        printf("Process %d [%d] ", rq_head->pid+1, rq_head->jls);
-curr = peek_rq_head(rq);
-        while (curr) {
-            printf("-- Process %d [%d]", curr->pid+1, curr->jls);
-            curr = curr->next;
-        }
-        printf("\n");
-
-
         // execute the head process for one instruction
         err = execute_command(rq_head, rq);
 
         // Process AGING: update the JLS of processes (except the head process) in the ready queue
         curr = peek_rq_head(rq);
         while (curr != NULL) {
-            // printf("Process %d: JLS = %d\n", curr->pid, curr->jls);
             if(curr->jls > 0) curr->jls--;
-            // printf("AFTER AGING ==> Process %d: JLS = %d\n", curr->pid, curr->jls);
             curr = curr->next;
         }
-
-
-        printf("Process %d [%d] ", rq_head->pid+1, rq_head->jls);
-curr = peek_rq_head(rq);
-        while (curr) {
-            printf("-- Process %d [%d]", curr->pid+1, curr->jls);
-            curr = curr->next;
-        }
-        printf("\n");
-        printf("\n");
-
-
-
         
         // find the process (other than the head process) with the minimum JLS
         min_jls = INT_MAX;
@@ -174,11 +150,10 @@ curr = peek_rq_head(rq);
         // otherwise, insert the processeses back into the queue according to their JLS
         else {
             if (min_jls < rq_head->jls) {
+                add_rq_tail(rq, rq_head);
                 min_jls_pcb = remove_rq_pcb(rq, min_jls_pcb);
-                add_rq_head(rq, rq_head);
                 add_rq_head(rq, min_jls_pcb);
             } else {
-                // add_rq_head(rq, min_jls_pcb);
                 add_rq_head(rq, rq_head);
             }
         }
