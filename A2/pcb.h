@@ -7,6 +7,7 @@ typedef struct pcb {
     int size; // size of the memory block i.e., number of lines of code in the script.
     struct memory_struct *pc; // pointer to the current line of code being executed -- program counter.
     struct pcb *next; // pointer to the next pcb in the ready queue.
+    int jls; // job length score -- computed by the SJF-AGING scheduler
 } pcb_t;
 
 #endif /* PCB_H */

@@ -27,6 +27,19 @@ void add_rq_tail(rq_t *rq, pcb_t *pcb) {
 }
 
 
+// adds a PCB to the head of the ready queue
+void add_rq_head(rq_t *rq, pcb_t *pcb) {
+    if (rq->head == NULL) {
+        rq->head = pcb;
+        rq->tail = pcb;
+    } else {
+        pcb->next = rq->head;
+        rq->head = pcb;
+    }
+    rq->size++;
+}
+
+
 // pops the head of ready queue and returns a pointer to it
 pcb_t *pop_rq_head(rq_t *rq) {
     if (rq->head == NULL) return NULL;
@@ -38,12 +51,19 @@ pcb_t *pop_rq_head(rq_t *rq) {
 } 
 
 
+// peeks the head of ready queue and returns a pointer to it
+pcb_t *peek_rq_head(rq_t *rq) {
+    return rq->head;
+}
+
+
 // removes the PCB with given PID from the ready queue
-pcb_t *remove_pcb(rq_t *rq, pcb_t *pcb) {
+pcb_t *remove_rq_pcb(rq_t *rq, pcb_t *pcb) {
     if (rq->head == NULL) return NULL;
     if (rq->head == pcb) {
         rq->head = rq->head->next;
         rq->size--;
+        pcb->next = NULL;
         return pcb;
     }
     pcb_t *curr = rq->head;
@@ -51,6 +71,7 @@ pcb_t *remove_pcb(rq_t *rq, pcb_t *pcb) {
         if (curr->next == pcb) {
             curr->next = curr->next->next;
             rq->size--;
+            pcb->next = NULL;
             return pcb;
         }
         curr = curr->next;

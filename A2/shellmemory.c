@@ -132,6 +132,9 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 	while(fgets(line, 1000, script) != NULL)
 		pcb->size++;
 
+	// initialize the initial job length score to script size
+	pcb->jls = pcb->size;
+
 	// get back to the beginning of script
 	rewind(script); 
 
