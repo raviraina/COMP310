@@ -188,7 +188,7 @@ int run(char* script, rq_t *rq){
 	fclose(fp);
 
 	// let the scheduler execute the script(s) in the ready queue
-	return RR_scheduler(rq);
+	return FCFS_scheduler(rq);
 }
 
 int myls() {
