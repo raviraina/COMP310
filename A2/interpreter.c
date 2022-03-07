@@ -239,7 +239,7 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 	for (int i = 0; i < args_size; i++) {
 		for (int j = i + 1; j < args_size; j++) {
 			if (strcmp(args[i],args[j]) == 0) {
-				printf("%s\n", "Incorrect usage: Filenames must be different.");
+				printf("%s\n", "Bad command: same file name");
 				return 1;
 			}
 		}
