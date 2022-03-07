@@ -14,7 +14,7 @@ int CURR_PID = 0;
 
 int help();
 int quit();
-int badcommand(char* command_args[], int args_size);
+int badcommand();
 int badcommandTooFewTokens();
 int badcommandTooManyTokens();
 // int set(char* var, char* value);
@@ -67,14 +67,17 @@ int interpreter(char* command_args[], int args_size, pcb_t *pcb, rq_t *rq){
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
 		return echo(command_args[1], pcb);
+		
 	} else if (strcmp(command_args[0], "my_ls")==0) {
 		if (args_size != 1) return badcommandTooManyTokens();
 		return myls();
+		
 	} else if (strcmp(command_args[0], "exec")==0) {
 		if (args_size < 3) return badcommandTooFewTokens();
 		if (args_size > 5) return badcommandTooManyTokens();
 		return exec(command_args+1, args_size-2, command_args[args_size - 1], rq);
-	} else return badcommand(command_args, args_size);
+		
+	} else return badcommand();
 }
 
 int help(){
@@ -94,11 +97,7 @@ int quit(){
 	exit(0);
 }
 
-int badcommand(char* command_args[], int args_size){
-	printf("%d", args_size);
-	for (int i = 0; i < args_size; i++) {
-		printf("%s", command_args[i]);
-	}
+int badcommand(){
 	printf("%s\n", "Unknown Command");
 	return 1;
 }
