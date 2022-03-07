@@ -17,14 +17,16 @@ int quit();
 int badcommand();
 int badcommandTooFewTokens();
 int badcommandTooManyTokens();
-// int set(char* var, char* value);
-int set(char **, int, pcb_t* pcb);
-int echo(char* var, pcb_t *pcb);
-int myls();
-int print(char* var, pcb_t *pcb);
-int run(char* script, rq_t *rq);
-int exec(char **, int args_size, char* policy, rq_t *rq);
+int badCommandDuplicateArguments();
 int badcommandFileDoesNotExist(char *);
+int badCommandUnableToLoadScript(char *);
+int set(char **, int, pcb_t* pcb);
+int echo(char*, pcb_t *);
+int myls();
+int print(char*, pcb_t *);
+int run(char*, rq_t *);
+int exec(char **, int, char*, rq_t *);
+
 
 // Interpret commands and their arguments
 int interpreter(char* command_args[], int args_size, pcb_t *pcb, rq_t *rq){
@@ -112,11 +114,22 @@ int badcommandTooManyTokens(){
 	return 2;
 }
 
-// For run command only
+int badCommandDuplicateArguments() {
+	printf("%s\n", "Bad Command: Duplicate arguments encountered");
+	return 2;
+}
+
+
 int badcommandFileDoesNotExist(char *file){
 	printf("Bad command: file %s not found\n", file);
 	return 3;
 }
+
+int badCommandUnableToLoadScript(char *file) {
+	printf("Error: unexpected error occurred while loading script %s into shell memory\n", file);
+	return 3;
+}
+
 
 // param args: array of strings (args[0] := variable name; args[1: args_size] := tokens)
 // param ars_size: length of args
@@ -163,8 +176,7 @@ int run(char* script, rq_t *rq){
 	pcb_t *pcb = malloc(sizeof(pcb_t));
 
 	if (pcb == NULL) {
-		printf("%s\n", "Error: malloc failed");
-		return -1;
+		return badCommandUnableToLoadScript(script);
 	}
 
 	FILE *fp = fopen(script, "rt"); // the program is in a file
@@ -181,7 +193,9 @@ int run(char* script, rq_t *rq){
 	add_rq_tail(rq, pcb);
 
 	// load script into memory
-	mem_load_script(fp, pcb);
+	if (mem_load_script(fp, pcb) != 0) {
+		return badCommandUnableToLoadScript(script);
+	}
 
 	// close the script
 	fclose(fp);
@@ -226,8 +240,8 @@ int myls() {
 		}
 		return 0;
 	} else {
-	/* could not open directory */
-		perror("Could not open directory");
+		// could not open directory
+		perror("Error: an unexpected error occurred while reading directory contents\n");
 		return 3;
 	}
 }
@@ -238,18 +252,17 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 	for (int i = 0; i < args_size; i++) {
 		for (int j = i + 1; j < args_size; j++) {
 			if (strcmp(args[i],args[j]) == 0) {
-				printf("%s\n", "Bad command: same file name");
-				return 1;
+				return badCommandDuplicateArguments();
 			}
 		}
 	}
 
 	// case if only 1 prog (FCFS through run)
 	if (args_size == 1) {
-			return run(args[0], rq);
+		return run(args[0], rq);
 	}
 
-	// load pcb, rq
+	// load all PCBs into the ready queue
 	for (int i = 0; i < args_size; i++) {
 		FILE *fp = fopen(args[i], "rt");
 		
@@ -259,11 +272,19 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 
 		pcb_t *pcb = malloc(sizeof(pcb_t));
 
+		if (pcb == NULL) {
+			return badCommandUnableToLoadScript(args[i]);
+		}
+
 		pcb->pid = CURR_PID++;
 		pcb->next = NULL;
 
 		add_rq_tail(rq, pcb);
-		mem_load_script(fp, pcb);
+		
+		if (mem_load_script(fp, pcb) != 0) {
+			return badCommandUnableToLoadScript(args[i]);
+		}
+
 		fclose(fp);
 	}
 
