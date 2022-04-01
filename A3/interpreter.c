@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h> // standard header in UNIX for directory traversal
+#include <errno.h>
 
 #include "shellmemory.h"
 #include "shell.h"
@@ -110,6 +111,8 @@ int quit(){
 		if (result == 0) {
 			printf("It is deleted\n");
 		}
+	} else if (ENOENT == errno) {
+		printf("Couldn't find backingstore directory to delete");
 	}
 	printf("%s\n", "Bye!");
 	exit(0);
