@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 
+#include <sys/stat.h>
+#include <errno.h>
 #include "interpreter.h"
 #include "shellmemory.h"
 #include "pcb.h"
@@ -18,6 +20,45 @@ int main(int argc, char *argv[])
 
 	printf("%s\n", "Shell version 1.2 Created March 2022");
 	help();
+
+	// TODO: Remove verbose error checking
+	// create backing store
+	int backingUsable = 0;
+	const char *name = "backingstore";
+	while(backingUsable == 0) {
+		errno = 0;
+		char cmd[40];
+		int result = 0;
+		int ret = mkdir(name, S_IRWXU);
+		if (ret == -1) {
+			switch (errno) {
+				case EACCES :
+					printf("ERROR: Current directory does not allow write access.");
+					exit(1);
+				
+				case EEXIST:
+					printf("pathname already exists");
+					sprintf(cmd, "rm -r %s", name);
+					result = system(cmd);
+					
+					if (result == 0) {
+        				printf("It is deleted\n");
+					}
+					continue;
+				
+				case ENAMETOOLONG:
+					printf("ERROR: Specified folder name is too long.");
+					exit(1);
+				
+				default:
+					perror("mkdir");
+					exit(EXIT_FAILURE);
+			}
+		} else {
+			printf("back store created");
+			backingUsable = 1;
+		}
+	}
 
 	char prompt = '$';				// Shell prompt
 	char userInput[MAX_USER_INPUT]; // user's input stored here

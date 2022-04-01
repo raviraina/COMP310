@@ -26,6 +26,7 @@ int myls();
 int print(char*, pcb_t *);
 int run(char*, rq_t *);
 int exec(char **, int, char*, rq_t *);
+int resetmem();
 
 
 // Interpret commands and their arguments
@@ -79,6 +80,9 @@ int interpreter(char* command_args[], int args_size, pcb_t *pcb, rq_t *rq){
 		if (args_size > 5) return badcommandTooManyTokens();
 		return exec(command_args+1, args_size-2, command_args[args_size - 1], rq);
 		
+	} else if (strcmp(command_args[0], "resetmem")==0) {
+		if (args_size != 1) return badcommandTooManyTokens();
+		return resetmem();
 	} else return badcommand();
 }
 
@@ -95,6 +99,18 @@ run SCRIPT.TXT		Executes the file SCRIPT.TXT\n ";
 }
 
 int quit(){
+	const char *name = "backingstore";
+	char cmd[40];
+	DIR* dir = opendir(name);
+	int result = 0;
+	if (dir) {
+		sprintf(cmd, "rm -r %s", name);
+		result = system(cmd);
+		
+		if (result == 0) {
+			printf("It is deleted\n");
+		}
+	}
 	printf("%s\n", "Bye!");
 	exit(0);
 }
@@ -248,14 +264,15 @@ int myls() {
 
 int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 	
+	// NOTE: A3 allows for identical args, shouldn't need this anymore
 	// check for duplicate args
-	for (int i = 0; i < args_size; i++) {
-		for (int j = i + 1; j < args_size; j++) {
-			if (strcmp(args[i],args[j]) == 0) {
-				return badCommandDuplicateArguments();
-			}
-		}
-	}
+	// for (int i = 0; i < args_size; i++) {
+	// 	for (int j = i + 1; j < args_size; j++) {
+	// 		if (strcmp(args[i],args[j]) == 0) {
+	// 			return badCommandDuplicateArguments();
+	// 		}
+	// 	}
+	// }
 
 	// case if only 1 prog (FCFS through run)
 	if (args_size == 1) {
@@ -300,5 +317,10 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 		printf("%s", "Invalid policy type. Choose from 'FCFS', 'SJF', 'RR', or 'AGING'");
 	}
 
+	return 0;
+}
+
+int resetmem() {
+	// TOOD: Implement
 	return 0;
 }
