@@ -116,7 +116,7 @@ int AGING_scheduler(rq_t *rq) {
     pcb_t *rq_head, *curr, *min_jls_pcb;
     
     // sort the ready queue in ascending order of the process' size (initially, JLS = script length)
-    // sort_rq_size(rq);
+    sort_rq_size(rq);
 
     // start executing processes
     while((rq_head = pop_rq_head(rq)) != NULL) {
