@@ -10,6 +10,9 @@
 // TODO: methods to interact with the free list
 // TODO: method to properly increment a process' PC -- increment_pc(pcb_t *pcb)
 
+const int FRAME_SIZE = 3; // size of each frame in the shellmemory
+const int VAR_MEM_SIZE = 100; // part of shellmemory to store variables
+const int FREE_LIST_SIZE = (int) (1000 - VAR_MEM_SIZE) / FRAME_SIZE; // size of the free list
 
 /*
 * first 100 places in shell memory are reserved for variables
@@ -17,13 +20,24 @@
 */
 struct memory_struct shellmemory[1000];
 
+/* 
+* free_list to keep track of holes in shell memory
+* index i of free_list corresponds to VAR_MEM_SIZE + (i * FRAME_SIZE) in shell memory
+*/
+int free_list[FREE_LIST_SIZE];
+
 
 // initialize shell memory with all variables and respective values as "none"
 void mem_init(){
 	int i;
+	// mark each spot in shellmemory as empty
 	for (i=0; i<1000; i++){		
 		shellmemory[i].var = "none";
 		shellmemory[i].value = "none";
+	}
+	// mark each frame as free
+	for (i = 0; i < FREE_LIST_SIZE; i ++) {
+		free_list[i] = 1;
 	}
 }
 
@@ -43,7 +57,7 @@ void mem_set_value(char *var_in, char *value_in, pcb_t *pcb) {
 		strcpy(var, var_in);
 	}
 
-	for (i=0; i<100; i++){
+	for (i=0; i<VAR_MEM_SIZE; i++){
 		if (strcmp(shellmemory[i].var, var) == 0){
 			shellmemory[i].value = strdup(value_in);
 			return;
@@ -51,7 +65,7 @@ void mem_set_value(char *var_in, char *value_in, pcb_t *pcb) {
 	}
 
 	//Value does not exist, need to find a free spot.
-	for (i=0; i<100; i++){
+	for (i=0; i<VAR_MEM_SIZE; i++){
 		if (strcmp(shellmemory[i].var, "none") == 0){
 			shellmemory[i].var = strdup(var);
 			shellmemory[i].value = strdup(value_in);
@@ -121,17 +135,32 @@ int mem_load_script_line(int pid, int line_number, char *script_line, struct mem
 	}
 	mem->var = strdup(key);
 	mem->value = strdup(script_line);
+	free(script_line);
 	// printf("var: %s, value: %s\n", mem->var, mem->value);
 	return 0;
 }
 
 
-// load script into memory
+// Loads a frame in shellmemory; returns -1 if error, 0 if success
+int mem_load_frame(int pid, int line_number, char **script_lines, int frame_num) {
+	int err = 0;
+	struct memory_struct *mem = &shellmemory[VAR_MEM_SIZE + (frame_num * FRAME_SIZE)];
+
+	for (int i = 0; i < FRAME_SIZE; i++) {
+		err = mem_load_script_line(pid, line_number++, script_lines[i], mem++);
+		if (err == -1) return err;
+	}
+	return err;
+}
+
+
+// Loads a script into memory
 // returns -1 if error, 0 if success
 int mem_load_script(FILE *script, pcb_t *pcb) {
-	char line[1000];
+	char line[1000]; // single line read from the script
+	char *page[FRAME_SIZE]; // a set of lines to be loaded into shellmemory
 	char c;
-	int i, j, base, line_num=1;
+	int i, j, k=0, line_num=1;
 
 	// calculate the size of script - number of lines
 	pcb->size = 0;
@@ -141,50 +170,72 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 	// initialize the initial job length score to script size
 	pcb->jls = pcb->size;
 
+	// allocate memory for the pcb page table
+	pcb->num_pages = pcb->size%FRAME_SIZE == 0 ? pcb->size/FRAME_SIZE : ((int) pcb->size/FRAME_SIZE) + 1;
+	pcb->page_table = calloc(pcb->num_pages, sizeof(int));
+
 	// get back to the beginning of script
 	rewind(script); 
 
-	// find a spot in shell memory suitable for loading script
-	// if no spot is found, return -1
-	for (i = 100; i < 1000; i++) {
-		base = i;
+	// find empty frames in shellmemory and load script pages into them
+	for (i = 0; i < FREE_LIST_SIZE; i++) {
+		j = 0;
+
 		// find an empty spot
-		if (strcmp(shellmemory[i].var, "none") == 0) {
-			// now check whether the next script_size spots are also empty
-			for (j = i+1; j < (i + pcb->size); j++) {
-				if (strcmp(shellmemory[j].var, "none") != 0) {
-					i = j+1;
-					break;
+		if (free_list[i] == 1) {
+			// mark the spot as taken
+			free_list[i] = 0;
+
+			// load one page from the script
+			while (fgets(line, 1000, script) != NULL && j < FRAME_SIZE) {
+				page[j++] = strdup(line);
+			}
+			// append empty lines to the end of page if it's not completely filled by lines from the script
+			if (j < FRAME_SIZE) {
+				while (j < FRAME_SIZE) {
+					page[j++] = strdup("\0");
 				}
 			}
+			
+			// load the page into shellmemory
+			if (mem_load_frame(pcb->pid, line_num, page, i) != 0) return -1;
 
-			if (i < j) { // found a spot
-				//update pcb base
-				pcb->base = &shellmemory[base];
-				pcb->pc = &shellmemory[base];
+			// increment the line number
+			line_num += FRAME_SIZE;
 
-				// load each line of script into the designated shell memory
-				while(fgets(line, 1000, script) != NULL && base < j) {
-					if(mem_load_script_line(pcb->pid, line_num++, line, &shellmemory[base++]) != 0)
-						return -1;
-				}		
-				return 0;
-			}
+			// update pcb->page_table to include the frame
+			pcb->page_table[k++] = i;
 		}
 	}
-	return -1;
+
+	// initialize the pcb->pc to the first frame
+	pcb->pc = &shellmemory[VAR_MEM_SIZE + (pcb->page_table[0] * FRAME_SIZE)];
+
+	return 0;
 }
 
 
+// cleans up a frame in shellmemory
+int mem_cleanup_frame(int frame_num) {
+	struct memory_struct *mem = &shellmemory[VAR_MEM_SIZE + (frame_num * FRAME_SIZE)];
 
+	for (int i=0; i<FRAME_SIZE; i++, mem++){
+		mem->var = "none";
+		mem->value = "none";
+	}
+
+	return 0;
+}
+
+
+// cleans up a script stored in shellmemory
 int mem_cleanup_script(pcb_t *pcb) {
 	char *var;
 	int pid;
-	
+
 	// clean up script from shell memory
-	for (int i = 0; i < pcb->size; i++) {
-		(pcb->base + i)->var = "none";
-		(pcb->base + i)->value = "none";
+	for (int i = 0; i < pcb->num_pages; i++) {
+		mem_cleanup_frame(pcb->page_table[i]);
 	}
 
 	// create regex to identify variables associated with a process

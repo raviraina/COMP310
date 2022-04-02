@@ -112,7 +112,7 @@ int quit(){
 			printf("It is deleted\n");
 		}
 	} else if (ENOENT == errno) {
-		printf("Couldn't find backingstore directory to delete");
+		printf("Couldn't find backingstore directory to delete\n");
 	}
 	printf("%s\n", "Bye!");
 	exit(0);

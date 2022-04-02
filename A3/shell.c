@@ -33,11 +33,11 @@ int main(int argc, char *argv[])
 		if (ret == -1) {
 			switch (errno) {
 				case EACCES :
-					printf("ERROR: Current directory does not allow write access.");
+					printf("ERROR: Current directory does not allow write access.\n");
 					exit(1);
 				
 				case EEXIST:
-					printf("pathname already exists");
+					printf("pathname already exists\n");
 					sprintf(cmd, "rm -r %s", name);
 					result = system(cmd);
 					
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
 					continue;
 				
 				case ENAMETOOLONG:
-					printf("ERROR: Specified folder name is too long.");
+					printf("ERROR: Specified folder name is too long.\n");
 					exit(1);
 				
 				default:
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 					exit(EXIT_FAILURE);
 			}
 		} else {
-			printf("back store created");
+			printf("back store created\n");
 			backingUsable = 1;
 		}
 	}
