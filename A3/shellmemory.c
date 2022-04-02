@@ -5,6 +5,12 @@
 #include "shellmemory.h"
 #include "pcb.h"
 
+
+// TODO: keep track of "holes" in shell memory using some data structure -- free_list
+// TODO: methods to interact with the free list
+// TODO: method to properly increment a process' PC -- increment_pc(pcb_t *pcb)
+
+
 /*
 * first 100 places in shell memory are reserved for variables
 * the remaining memory is used for loading scripts
