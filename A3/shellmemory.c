@@ -7,10 +7,6 @@
 #include "pcb.h"
 
 
-// TODO: keep track of "holes" in shell memory using some data structure -- free_list
-// TODO: methods to interact with the free list
-// TODO: method to properly increment a process' PC -- increment_pc(pcb_t *pcb)
-
 const int FRAME_SIZE = 3; // size of each frame in the shellmemory
 const int VAR_MEM_SIZE = 100; // part of shellmemory to store variables
 const int FREE_LIST_SIZE = (int) (1000 - VAR_MEM_SIZE) / FRAME_SIZE; // size of the free list
@@ -144,7 +140,7 @@ int mem_load_script_line(int pid, int line_number, char *script_line, struct mem
 	mem->var = strdup(key);
 	mem->value = strdup(script_line);
 	free(script_line);
-	// printf("var: %s, value: %s\n", mem->var, mem->value);
+
 	return 0;
 }
 
@@ -153,8 +149,6 @@ int mem_load_script_line(int pid, int line_number, char *script_line, struct mem
 int mem_load_frame(int pid, int line_number, char **script_lines, int frame_num) {
 	int err = 0;
 	struct memory_struct *mem = NULL;
-	// struct memory_struct *mem = &shellmemory[VAR_MEM_SIZE + (frame_num * FRAME_SIZE)];
-	// struct memory_struct *mem = mem_get_entry(frame_num, 0);
 
 	for (int i = 0; i < FRAME_SIZE; i++) {
 		mem = mem_get_entry(frame_num, i);
@@ -198,12 +192,12 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 			free_list[i] = 0;
 
 			// load one page from the script
-			while (fgets(line, 1000, script) != NULL && j < FRAME_SIZE) {
-				page[j++] = strdup(line);
-			}
-			// append empty lines to the end of page if it's not completely filled by lines from the script
 			while (j < FRAME_SIZE) {
-				page[j++] = strdup("\0");
+				if(fgets(line, 1000, script) != NULL) {
+					page[j++] = strdup(line);
+				} else {
+					page[j++] = strdup("\0");
+				}
 			}
 			
 			// load the page into shellmemory
@@ -215,23 +209,11 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 			// update pcb->page_table to include the frame
 			pcb->page_table[k++] = i;
 		}
-
-		// break out of the loop if the script has been loaded
-		// if(line_num >= pcb->size) break;
 	}
 
 	// initialize the pcb->pc to the first entry of the first frame
 	pcb->pc = mem_get_entry(pcb->page_table[0], 0);
 	pcb->curr_page = 0;
-
-	printf("Script loaded into memory\n");
-	printf("pcb->num_pages = %d\n", pcb->num_pages);
-	for(int x = 0; x < pcb->num_pages; x++) {
-		for (int y = 0; y < FRAME_SIZE; y++) {
-			struct memory_struct *mem = mem_get_entry(pcb->page_table[x], y);
-			printf("Instruction on page %d offset %d: %s\n", x, y, mem->value);
-		}
-	}
 
 	return 0;
 }
@@ -239,7 +221,6 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 
 // cleans up a frame in shellmemory
 int mem_cleanup_frame(int frame_num) {
-	// struct memory_struct *mem = &shellmemory[VAR_MEM_SIZE + (frame_num * FRAME_SIZE)];
 	struct memory_struct *mem = mem_get_entry(frame_num, 0);
 
 	for (int i=0; i<FRAME_SIZE; i++, mem++){
