@@ -9,13 +9,32 @@
 #include "shellmemory.h"
 
 
+// helper function to increment a proram's PC -- sets PC to NULL if it has already reached the end of the program
+void increment_pc(pcb_t *pcb) {
+    // check whether the current PC is the last command in the current frame
+    // if so, get the next frame and set PC to the first command of that frame
+    // if not, simply do PC++
+    struct memory_struct *frame_last_entry = mem_get_entry(pcb->page_table[pcb->curr_page], FRAME_SIZE - 1);
+    if (pcb->pc < frame_last_entry) {
+        pcb->pc++;
+    } else {
+        if (pcb->curr_page == pcb->num_pages - 1) {
+            pcb->pc = NULL;
+            return;
+        }
+        pcb->curr_page++;
+        pcb->pc = mem_get_entry(pcb->page_table[pcb->curr_page], 0);
+    }
+}
+
+
 // helper function to execute a line in the process
 int execute_command(pcb_t *pcb, rq_t *rq) {
     // pass the stuff to parseInput function
     int err = parseInput(pcb->pc->value, pcb, rq);
 
     // increment the process's PC
-    pcb->pc++;
+    increment_pc(pcb);
 
     // return the error code
     return err;
@@ -54,7 +73,6 @@ void sort_rq_size(rq_t *rq) {
 }
 
 
-
 // Runs the processes in the ready queue according to FCFS scheduling policy
 int FCFS_scheduler(rq_t *rq) {
     int err = 0;
@@ -62,9 +80,12 @@ int FCFS_scheduler(rq_t *rq) {
     // execute all processes in the ready queue one-by-one (FCFS)
     while ((rq_head = pop_rq_head(rq)) != NULL) {
         // execute the process line-by-line
-        for (int i = 0; i < rq_head->size; i++) {
+        // for (int i = 0; i < rq_head->size; i++) {
+        //     err = execute_command(rq_head, rq);
+        //     // rq_head->pc ++;
+        // }
+        while(rq_head->pc != NULL) {
             err = execute_command(rq_head, rq);
-            // rq_head->pc ++;
         }
 
         // cleanup the current process
@@ -93,13 +114,13 @@ int RR_scheduler(rq_t *rq) {
     
     while ((rq_head = pop_rq_head(rq)) != NULL) {   
         // execute two instructions of the process
-        for (int i =  0; (i < 2) && (rq_head->pc <= (rq_head->base + rq_head->size - 1)); i++) {
+        for (int i =  0; (i < 2) && (rq_head->pc != NULL); i++) {
             err = execute_command(rq_head, rq);
             // rq_head->pc ++;
         }
 
-        if (rq_head->pc <= (rq_head->base + rq_head->size - 1)) {
-            // add the process back to the ready queue (waiting state)
+        if (rq_head->pc != NULL) {
+            // add the process back to the ready queue (waiting state) if it hasn't reached its end yet
             add_rq_tail(rq, rq_head);
         } else {
             // cleanup the current process
@@ -142,7 +163,7 @@ int AGING_scheduler(rq_t *rq) {
         }
 
         // if the head process has finished execution, cleanup the memory.
-        if (rq_head->pc > (rq_head->base + rq_head->size - 1)) {
+        if (rq_head->pc == NULL) {
             mem_cleanup_script(rq_head);
             min_jls_pcb = remove_rq_pcb(rq, min_jls_pcb);
             add_rq_head(rq, min_jls_pcb);
