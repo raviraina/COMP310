@@ -207,6 +207,7 @@ int run(char* script, rq_t *rq){
 	// initiate a pcb for the script
 	pcb->pid = CURR_PID++;
 	pcb->next = NULL;
+	pcb->script_name = strdup(script);
 
 	// add pcb to the ready queue
 	add_rq_tail(rq, pcb);
@@ -298,6 +299,7 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 
 		pcb->pid = CURR_PID++;
 		pcb->next = NULL;
+		pcb->script_name = strdup(args[i]);
 
 		add_rq_tail(rq, pcb);
 		

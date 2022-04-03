@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <assert.h>
 
 #include "pcb.h"
 #include "readyqueue.h"
@@ -45,11 +46,14 @@ int handle_page_fault(pcb_t *pcb, rq_t *rq) {
     int err = 0;
 
     // load the next page (pcb->curr_page + 1) of process as char *page[FRAME_SIZE]
-    // note that it automatically increments the pcb->curr_page
+    // IGNORE: note that it automatically increments the pcb->curr_page [NOT FOR NOW]
     load_next_page(pcb, page);
 
     // store the page into a frame
-    err = mem_load_frame(pcb, page, pcb->curr_page, rq);
+    err = mem_load_frame(pcb, page, pcb->curr_page + 1, rq);
+
+    // increment the PC of the program accordingly
+    assert(increment_pc(pcb) == 0);
     
     // add pcb to the tail of the ready queue
     add_rq_tail(rq, pcb);
@@ -150,14 +154,20 @@ int SJF_scheduler(rq_t *rq) {
 // Runs the processes in the ready queue according to RR scheduling policy
 // Note: To make things simpler, in this assignment one-liners are considered as a single instruction.
 int RR_scheduler(rq_t *rq) {
-    int err = 0;
+    int pf, err = 0;
     pcb_t *rq_head;
     
     while ((rq_head = pop_rq_head(rq)) != NULL) {   
         // execute two instructions of the process
         for (int i =  0; (i < 2) && (rq_head->pc != NULL); i++) {
             err = execute_command(rq_head, rq);
-            // rq_head->pc ++;
+            if (err == -9) {
+                // handle page fault and continue with the program execution
+                handle_page_fault(rq_head, rq);
+                pf = 1;
+                break;
+            }
+
         }
 
         if (rq_head->pc != NULL) {

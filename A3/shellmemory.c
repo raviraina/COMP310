@@ -5,6 +5,7 @@
 #include <assert.h>
 #include "shellmemory.h"
 #include "pcb.h"
+#include "readyqueue.h"
 
 
 const int FRAME_SIZE = (int) FRAMESIZE; // size of each frame in the shellmemory
@@ -134,11 +135,12 @@ int check_mem_value_exists(char *var_in, pcb_t *pcb) {
 void load_next_page(pcb_t *pcb, char **page) {
 	assert(pcb->curr_page < pcb->num_pages - 1);
 	// increment the current page
-	pcb->curr_page++;
+	// pcb-<curr_page++;
+	int page_num = pcb->curr_page + 1;
 
-	char *line[1000];
+	char line[1000];
 	int i = 0, line_num = 1;
-	int line_num_to_store_from = (pcb->curr_page * FRAME_SIZE) + 1;
+	int line_num_to_store_from = (page_num * FRAME_SIZE) + 1;
 
 	// open the file
 	FILE *script = fopen(pcb->script_name, "r");
@@ -203,7 +205,7 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num, rq_t *rq) {
 			flag = 1;
 			free_list[i] = 0;
 			// load the frame into that spot and update the pcb->page_table
-			err = mem_load_frame1(pcb->pid, (pcb->curr_page * FRAME_SIZE) + 1, script_lines, i);
+			err = mem_load_frame1(pcb->pid, (page_num * FRAME_SIZE) + 1, script_lines, i);
 			pcb->page_table[page_num] = i;
 			break;
 		}
@@ -244,7 +246,7 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num, rq_t *rq) {
 		mem_cleanup_frame(frame_num_to_evict);
 
 		// load the new page into the opened up slot and update pcb->page_table
-		err = mem_load_frame1(pcb->pid, (pcb->curr_page * FRAME_SIZE) + 1, script_lines, frame_num_to_evict);
+		err = mem_load_frame1(pcb->pid, (page_num * FRAME_SIZE) + 1, script_lines, frame_num_to_evict);
 		pcb->page_table[page_num] = frame_num_to_evict;
 	}
 
@@ -259,9 +261,6 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 	char *page[FRAME_SIZE]; // a set of lines to be loaded into shellmemory
 	char c;
 	int i, j, k=0, line_num=1;
-
-	// store the script name in the PCB
-	pcb->script_name = strdup(script);
 
 	// calculate the size of script - number of lines
 	pcb->size = 0;

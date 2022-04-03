@@ -2,6 +2,7 @@
 #define SHELLMEMORY_H
 
 #include "pcb.h"
+#include "readyqueue.h"
 
 struct memory_struct{
 	char *var;
@@ -25,5 +26,6 @@ void load_next_page(pcb_t *pcb, char **page);
 int mem_load_script_line(int pid, int line_number, char *script_line, struct memory_struct *mem);
 int mem_load_script(FILE *script, pcb_t *pcb);
 int mem_cleanup_script(pcb_t *pcb);
+int mem_cleanup_frame(int frame_num);
 
 #endif /* SHELLMEMORY_H */
