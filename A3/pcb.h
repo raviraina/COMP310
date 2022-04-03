@@ -10,6 +10,7 @@ typedef struct pcb {
     int jls; // job length score -- computed by the SJF-AGING scheduler
     int num_pages; // number of pages in the script
     int* page_table; // page table to keep track of pages of the process. Will be initialized to point to appropriate pages when the process is loaded into memory.
+    char *script_name; // name of the script file stored in backing store to load data from.
 } pcb_t;
 
 #endif /* PCB_H */

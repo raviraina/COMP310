@@ -10,31 +10,66 @@
 
 
 // helper function to increment a proram's PC -- sets PC to NULL if it has already reached the end of the program
-void increment_pc(pcb_t *pcb) {
+// returns 0 if PC incremented successfully, 1 if page fault
+int increment_pc(pcb_t *pcb) {
     // check whether the current PC is the last command in the current frame
     // if so, get the next frame and set PC to the first command of that frame
     // if not, simply do PC++
     struct memory_struct *frame_last_entry = mem_get_entry(pcb->page_table[pcb->curr_page], FRAME_SIZE - 1);
     if (pcb->pc < frame_last_entry) {
         pcb->pc++;
+        return 0;
     } else {
+        // check whether we have reached the end of the script
         if (pcb->curr_page == pcb->num_pages - 1) {
             pcb->pc = NULL;
-            return;
+            return 0;
         }
-        pcb->curr_page++;
-        pcb->pc = mem_get_entry(pcb->page_table[pcb->curr_page], 0);
+
+        // check whether the next page of the script is available in memory. If so, increment PC 
+        if (pcb->page_table[pcb->curr_page + 1] != -1) {
+            pcb->curr_page++;
+            pcb->pc = mem_get_entry(pcb->page_table[pcb->curr_page], 0);
+            return 0;
+        } 
+
+        // if none of the previous two are the case, throw a page fault
+        return -1;
     }
 }
 
 
+int handle_page_fault(pcb_t *pcb, rq_t *rq) {
+    // handle page fault
+    char *page[FRAME_SIZE];
+    int err = 0;
+
+    // load the next page (pcb->curr_page + 1) of process as char *page[FRAME_SIZE]
+    // note that it automatically increments the pcb->curr_page
+    load_next_page(pcb, page);
+
+    // store the page into a frame
+    err = mem_load_frame(pcb, page, pcb->curr_page, rq);
+    
+    // add pcb to the tail of the ready queue
+    add_rq_tail(rq, pcb);
+
+    return err;
+}
+
+
+
 // helper function to execute a line in the process
+// returns error code, -9 if page fault
 int execute_command(pcb_t *pcb, rq_t *rq) {
     // pass the stuff to parseInput function
     int err = parseInput(pcb->pc->value, pcb, rq);
 
     // increment the process's PC
-    increment_pc(pcb);
+    if (increment_pc(pcb) != 0) {
+        // send page fault signal to scheduler
+        return -9;
+    }
 
     // return the error code
     return err;
@@ -75,17 +110,23 @@ void sort_rq_size(rq_t *rq) {
 
 // Runs the processes in the ready queue according to FCFS scheduling policy
 int FCFS_scheduler(rq_t *rq) {
-    int err = 0;
+    int pf, err = 0;
     pcb_t *rq_head;
     // execute all processes in the ready queue one-by-one (FCFS)
     while ((rq_head = pop_rq_head(rq)) != NULL) {
-        // execute the process line-by-line
-        // for (int i = 0; i < rq_head->size; i++) {
-        //     err = execute_command(rq_head, rq);
-        //     // rq_head->pc ++;
-        // }
         while(rq_head->pc != NULL) {
             err = execute_command(rq_head, rq);
+            pf = 0;
+            if (err == -9) {
+                // handle page fault and continue with the program execution
+                handle_page_fault(rq_head, rq);
+                pf = 1;
+                break;
+            }
+        }
+        
+        if(pf) {
+            continue;
         }
 
         // cleanup the current process
