@@ -8,15 +8,17 @@
 #include "readyqueue.h"
 
 
-const int FRAME_SIZE = (int) FRAMESIZE; // size of each frame in the shellmemory
+const int FRAME_SIZE = 3; // size of each frame in shellmemory
+const int FRAME_MEM_SIZE = (int) FRAMEMEMSIZE * FRAME_SIZE; // amount of shellmemory entries allocated for frames
 const int VAR_MEM_SIZE = (int) VARMEMSIZE; // part of shellmemory to store variables
-const int FREE_LIST_SIZE = (int) (1000 - VAR_MEM_SIZE) / FRAME_SIZE; // size of the free list
+const int SHELL_MEM_SIZE = FRAME_MEM_SIZE + VAR_MEM_SIZE; // total size of the shellmemory
+const int FREE_LIST_SIZE = (int) (SHELL_MEM_SIZE - VAR_MEM_SIZE) / FRAME_SIZE; // size of the free list
 
 /*
 * first 100 places in shell memory are reserved for variables
 * the remaining memory is used for loading scripts
 */
-struct memory_struct shellmemory[1000];
+struct memory_struct shellmemory[SHELL_MEM_SIZE];
 
 /* 
 * free_list to keep track of holes in shell memory
@@ -28,7 +30,7 @@ int free_list[FREE_LIST_SIZE];
 void mem_init(){
 	int i;
 	// mark each spot in shellmemory as empty
-	for (i=0; i<1000; i++){		
+	for (i=0; i<SHELL_MEM_SIZE; i++){		
 		shellmemory[i].var = "none";
 		shellmemory[i].value = "none";
 	}
@@ -93,7 +95,7 @@ char *mem_get_value(char *var_in, pcb_t *pcb) {
 		strcpy(var, var_in);
 	}
 
-	for (i=0; i<100; i++){
+	for (i=0; i<VAR_MEM_SIZE; i++){
 		if (strcmp(shellmemory[i].var, var) == 0){
 
 			return strdup(shellmemory[i].value);
@@ -115,7 +117,7 @@ int check_mem_value_exists(char *var_in, pcb_t *pcb) {
 		strcpy(var, var_in);
 	}
 
-	for (i=0; i<100; i++){
+	for (i=0; i<VAR_MEM_SIZE; i++){
 		if (strcmp(shellmemory[i].var, var) == 0){
 
 			return 1;
@@ -128,7 +130,6 @@ int check_mem_value_exists(char *var_in, pcb_t *pcb) {
 
 
 // Shell memory functions for loading scripts
-
 
 // loads the next required page from the script into the given page
 void load_page(pcb_t *pcb, int page_num, char **page) {
@@ -368,7 +369,7 @@ int mem_cleanup_script(pcb_t *pcb) {
 	regcomp(&re, "^[0-9]+-[a-zA-Z0-9]+$", 0);
 
 	// clean up script variables from shell memory
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < VAR_MEM_SIZE; i++) {
 		if (regexec(&re, shellmemory[i].var, 0, NULL, 0) == 0) {
 			sscanf(shellmemory[i].var, "%d-%s", &pid, var);
 			// check if the variable is associated with the given process

@@ -11,7 +11,9 @@ struct memory_struct{
 
 extern const int FRAME_SIZE;
 extern const int VAR_MEM_SIZE;
+extern const int FRAME_MEM_SIZE;
 extern const int FREE_LIST_SIZE;
+extern const int SHELL_MEM_SIZE;
 
 void mem_init();
 struct memory_struct *mem_get_entry(int frame_number, int offset);
