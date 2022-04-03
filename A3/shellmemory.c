@@ -7,8 +7,8 @@
 #include "pcb.h"
 
 
-const int FRAME_SIZE = 3; // size of each frame in the shellmemory
-const int VAR_MEM_SIZE = 100; // part of shellmemory to store variables
+const int FRAME_SIZE = (int) FRAMESIZE; // size of each frame in the shellmemory
+const int VAR_MEM_SIZE = (int) VARMEMSIZE; // part of shellmemory to store variables
 const int FREE_LIST_SIZE = (int) (1000 - VAR_MEM_SIZE) / FRAME_SIZE; // size of the free list
 
 /*

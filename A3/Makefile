@@ -5,7 +5,7 @@ DEPS = pcb.h
 
 
 mysh: shell.c interpreter.c shellmemory.c
-	gcc -c shell.c interpreter.c shellmemory.c readyqueue.c scheduler.c  
+	gcc -D FRAMESIZE=$(framesize) -D VARMEMSIZE=$(varmemsize) -c shell.c interpreter.c shellmemory.c readyqueue.c scheduler.c  
 	gcc -o mysh shell.o interpreter.o shellmemory.o readyqueue.o scheduler.o
 
 clean: 
