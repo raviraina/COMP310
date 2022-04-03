@@ -132,7 +132,7 @@ int check_mem_value_exists(char *var_in, pcb_t *pcb) {
 
 // loads the next required page from the script into the given page
 void load_page(pcb_t *pcb, int page_num, char **page) {
-	// assert(pcb->curr_page < pcb->num_pages - 1);
+	assert(pcb->curr_page < pcb->num_pages && page_num < pcb->num_pages);
 
 	char line[1000];
 	int i = 0, line_num = 1;
