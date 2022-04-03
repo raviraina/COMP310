@@ -9,10 +9,10 @@
 
 
 const int FRAME_SIZE = 3; // size of each frame in shellmemory
-const int FRAME_MEM_SIZE = (int) FRAMEMEMSIZE * FRAME_SIZE; // amount of shellmemory entries allocated for frames
 const int VAR_MEM_SIZE = (int) VARMEMSIZE; // part of shellmemory to store variables
-const int SHELL_MEM_SIZE = FRAME_MEM_SIZE + VAR_MEM_SIZE; // total size of the shellmemory
-const int FREE_LIST_SIZE = (int) (SHELL_MEM_SIZE - VAR_MEM_SIZE) / FRAME_SIZE; // size of the free list
+const int SHELL_MEM_SIZE = FRAMEMEMSIZE + VARMEMSIZE; // total size of the shellmemory
+const int FREE_LIST_SIZE = FRAMEMEMSIZE % FRAME_SIZE == 0 ? FRAMEMEMSIZE / FRAME_SIZE : (int) (FRAMEMEMSIZE / FRAME_SIZE) + 1; // amount of shellmemory entries allocated for frames and also the size of free_list
+// const int FREE_LIST_SIZE = (int) (SHELL_MEM_SIZE - VAR_MEM_SIZE) / FRAME_SIZE; // size of the free list
 
 /*
 * first 100 places in shell memory are reserved for variables

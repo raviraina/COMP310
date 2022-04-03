@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 {
 
 	printf("%s\n", "Shell version 1.2 Created March 2022");
-	printf("Frame Store Size = %d; Variable Store Size = %d\n",FRAME_MEM_SIZE, VAR_MEM_SIZE);
+	printf("Frame Store Size = %d; Variable Store Size = %d\n",FREE_LIST_SIZE * FRAME_SIZE, VAR_MEM_SIZE);
 	help();
 
 	// TODO: Remove verbose error checking
