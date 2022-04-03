@@ -41,13 +41,15 @@ int increment_pc(pcb_t *pcb) {
 
 
 int handle_page_fault(pcb_t *pcb, rq_t *rq) {
+    printf("<<<HANDLING PAGE FAULT>>>\n");
+
     // handle page fault
     char *page[FRAME_SIZE];
     int err = 0;
 
     // load the next page (pcb->curr_page + 1) of process as char *page[FRAME_SIZE]
     // IGNORE: note that it automatically increments the pcb->curr_page [NOT FOR NOW]
-    load_next_page(pcb, page);
+    load_page(pcb, pcb->curr_page + 1, page);
 
     // store the page into a frame
     err = mem_load_frame(pcb, page, pcb->curr_page + 1, rq);

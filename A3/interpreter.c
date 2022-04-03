@@ -213,7 +213,7 @@ int run(char* script, rq_t *rq){
 	add_rq_tail(rq, pcb);
 
 	// load script into memory
-	if (mem_load_script(fp, pcb) != 0) {
+	if (mem_load_script(fp, pcb, rq) != 0) {
 		return badCommandUnableToLoadScript(script);
 	}
 
@@ -303,7 +303,7 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 
 		add_rq_tail(rq, pcb);
 		
-		if (mem_load_script(fp, pcb) != 0) {
+		if (mem_load_script(fp, pcb, rq) != 0) {
 			return badCommandUnableToLoadScript(args[i]);
 		}
 

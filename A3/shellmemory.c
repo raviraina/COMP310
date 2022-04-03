@@ -24,7 +24,6 @@ struct memory_struct shellmemory[1000];
 */
 int free_list[FREE_LIST_SIZE];
 
-
 // initialize shell memory with all variables and respective values as "none"
 void mem_init(){
 	int i;
@@ -132,11 +131,8 @@ int check_mem_value_exists(char *var_in, pcb_t *pcb) {
 
 
 // loads the next required page from the script into the given page
-void load_next_page(pcb_t *pcb, char **page) {
-	assert(pcb->curr_page < pcb->num_pages - 1);
-	// increment the current page
-	// pcb-<curr_page++;
-	int page_num = pcb->curr_page + 1;
+void load_page(pcb_t *pcb, int page_num, char **page) {
+	// assert(pcb->curr_page < pcb->num_pages - 1);
 
 	char line[1000];
 	int i = 0, line_num = 1;
@@ -194,7 +190,7 @@ int mem_load_frame1(int pid, int line_number, char **script_lines, int frame_num
 }
 
 
-// Loads a page into a frame in shellmemory
+// Loads a page into a frame in shellmemory and updates the page tables accordingly
 int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num, rq_t *rq) {
 	int flag = 0, frame_num_to_evict, err = 0;
 	pcb_t *rq_head = peek_rq_head(rq);
@@ -256,7 +252,7 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num, rq_t *rq) {
 
 // Loads a script into memory
 // returns -1 if error, 0 if success
-int mem_load_script(FILE *script, pcb_t *pcb) {
+int mem_load_script(FILE *script, pcb_t *pcb, rq_t *rq) {
 	char line[1000]; // single line read from the script
 	char *page[FRAME_SIZE]; // a set of lines to be loaded into shellmemory
 	char c;
@@ -279,41 +275,57 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 		pcb->page_table[x] = -1;
 	}
 
+	// current page = 0
+	pcb->curr_page = 0;
+
 	// get back to the beginning of script
 	rewind(script); 
 
-	// find empty frames in shellmemory and load script pages into them
-	for (i = 0; i < FREE_LIST_SIZE && k < pcb->num_pages; i++) {
-		j = 0;
 
-		// find an empty spot
-		if (free_list[i] == 1) {
-			// mark the spot as taken
-			free_list[i] = 0;
+	// load two pages of the script and load them into the shellmemory
+	for (i = 0; (i < 2 && i < pcb->num_pages) ; i++) {
+		// load next page
+		load_page(pcb, i, page);
 
-			// load one page from the script
-			while (j < FRAME_SIZE) {
-				if(fgets(line, 1000, script) != NULL) {
-					page[j++] = strdup(line);
-				} else {
-					page[j++] = strdup("\0");
-				}
-			}
-			
-			// load the page into shellmemory
-			if (mem_load_frame1(pcb->pid, line_num, page, i) != 0) return -1;
+		// for (j =0; j < FRAME_SIZE; j++) {
+		// 	printf("PAGE %d ----> %s\n", i, page[j]);
+		// }
 
-			// increment the line number
-			line_num += FRAME_SIZE;
-
-			// update pcb->page_table to include the frame
-			pcb->page_table[k++] = i;
-		}
+		// store the page into the frame
+		if (mem_load_frame(pcb, page, i, rq) != 0) return -1;
 	}
+
+	// // find empty frames in shellmemory and load script pages into them
+	// for (i = 0; i < FREE_LIST_SIZE && k < pcb->num_pages; i++) {
+	// 	j = 0;
+
+	// 	// find an empty spot
+	// 	if (free_list[i] == 1) {
+	// 		// mark the spot as taken
+	// 		free_list[i] = 0;
+
+	// 		// load one page from the script
+	// 		while (j < FRAME_SIZE) {
+	// 			if(fgets(line, 1000, script) != NULL) {
+	// 				page[j++] = strdup(line);
+	// 			} else {
+	// 				page[j++] = strdup("\0");
+	// 			}
+	// 		}
+			
+	// 		// load the page into shellmemory
+	// 		if (mem_load_frame1(pcb->pid, line_num, page, i) != 0) return -1;
+
+	// 		// increment the line number
+	// 		line_num += FRAME_SIZE;
+
+	// 		// update pcb->page_table to include the frame
+	// 		pcb->page_table[k++] = i;
+	// 	}
+	// }
 
 	// initialize the pcb->pc to the first entry of the first frame
 	pcb->pc = mem_get_entry(pcb->page_table[0], 0);
-	pcb->curr_page = 0;
 
 	return 0;
 }
