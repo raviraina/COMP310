@@ -23,7 +23,7 @@ int increment_pc(pcb_t *pcb) {
     // check whether the current PC is the last command in the current frame
     // if so, get the next frame and set PC to the first command of that frame
     // if not, simply do PC++
-    struct memory_struct *frame_last_entry = mem_get_entry(pcb->page_table[pcb->curr_page], FRAME_SIZE - 1);
+    mem_entry_t *frame_last_entry = mem_get_entry(pcb->page_table[pcb->curr_page], FRAME_SIZE - 1);
     if (pcb->pc < frame_last_entry) {
         pcb->pc++;
         // check whether the new PC corresponds to an empty command i.e., we have reached the end of script

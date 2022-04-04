@@ -5,6 +5,7 @@
 #include <assert.h>
 
 #include "shellmemory.h"
+#include "frame.h"
 #include "pcb.h"
 #include "readyqueue.h"
 
@@ -17,7 +18,7 @@ const int FREE_LIST_SIZE = FRAMEMEMSIZE % FRAME_SIZE == 0 ? FRAMEMEMSIZE / FRAME
 * first 100 places in shell memory are reserved for variables
 * the remaining memory is used for loading scripts
 */
-struct memory_struct shellmemory[SHELL_MEM_SIZE];
+mem_entry_t shellmemory[SHELL_MEM_SIZE];
 
 /* 
 * free_list to keep track of holes in shell memory
@@ -41,8 +42,8 @@ void mem_init(){
 
 
 // get the shellmemory struct for a given frame and offset
-struct memory_struct *mem_get_entry(int frame_number, int offset){
-	assert(offset >= 0 && offset < FRAME_SIZE);
+mem_entry_t *mem_get_entry(int frame_number, int offset){
+	assert(frame_number < FREE_LIST_SIZE && offset >= 0 && offset < FRAME_SIZE);
 	return &shellmemory[VAR_MEM_SIZE + (frame_number * FRAME_SIZE)] + offset;
 }
 
@@ -161,7 +162,7 @@ void load_page(pcb_t *pcb, int page_num, char **page) {
 }
 
 // returns -1 if error, 0 if success
-int mem_load_script_line(int pid, int line_number, char *script_line, struct memory_struct *mem) {
+int mem_load_script_line(int pid, int line_number, char *script_line, mem_entry_t *mem) {
 	int i;
 	char key[10];
 	if (strcmp(script_line, "none") == 0){
@@ -183,7 +184,7 @@ int mem_load_script_line(int pid, int line_number, char *script_line, struct mem
 // Loads a frame in shellmemory; returns -1 if error, 0 if success
 int mem_load_frame1(int pid, int line_number, char **script_lines, int frame_num) {
 	int err = 0;
-	struct memory_struct *mem = NULL;
+	mem_entry_t *mem = NULL;
 
 	for (int i = 0; i < FRAME_SIZE; i++) {
 		mem = mem_get_entry(frame_num, i);
@@ -319,7 +320,7 @@ int mem_load_script(FILE *script, pcb_t *pcb, rq_t *rq) {
 // cleans up a frame in shellmemory
 // REMEMBER: update the corresponding PCB's page table when removing a frame. It's NOT done automatically in this function
 int mem_cleanup_frame(int frame_num) {
-	struct memory_struct *mem = mem_get_entry(frame_num, 0);
+	mem_entry_t *mem = mem_get_entry(frame_num, 0);
 
 	for (int i=0; i<FRAME_SIZE; i++, mem++){
 		mem->var = "none";
