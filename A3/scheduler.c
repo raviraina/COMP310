@@ -60,7 +60,7 @@ int handle_page_fault(pcb_t *pcb, rq_t *rq) {
     load_page(pcb, pcb->curr_page + 1, page);
 
     // store the page into a frame
-    err = mem_load_frame(pcb, page, pcb->curr_page + 1, rq);
+    err = mem_load_frame(pcb, page, pcb->curr_page + 1);
     
     // add pcb to the tail of the ready queue
     add_rq_tail(rq, pcb);
@@ -146,8 +146,10 @@ int FCFS_scheduler(rq_t *rq) {
             continue;
         }
 
+        // remove rq_head from the ready queue
+        remove_rq_pcb(rq, rq_head);
         // cleanup the current process
-        mem_cleanup_script(rq_head, rq);
+        mem_cleanup_script(rq_head);
 
     }
     return err;
@@ -190,8 +192,10 @@ int RR_scheduler(rq_t *rq) {
                 add_rq_tail(rq, rq_head);
             }
         } else {
+            // remove rq_head from the ready queue
+            remove_rq_pcb(rq, rq_head);
             // cleanup the current process
-            mem_cleanup_script(rq_head, rq);
+            mem_cleanup_script(rq_head);
         }
     }
     return err;
@@ -236,7 +240,11 @@ int AGING_scheduler(rq_t *rq) {
 
         // if the head process has finished execution, cleanup the memory.
         if (rq_head->pc == NULL) {
-            mem_cleanup_script(rq_head, rq);
+            // remove rq_head from the ready queue
+            remove_rq_pcb(rq, rq_head);
+            // cleanup the current process
+            mem_cleanup_script(rq_head);
+
             min_jls_pcb = remove_rq_pcb(rq, min_jls_pcb);
             add_rq_head(rq, min_jls_pcb);
         }
