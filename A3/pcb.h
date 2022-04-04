@@ -11,6 +11,7 @@ typedef struct pcb {
     int num_pages; // number of pages in the script
     int* page_table; // page table to keep track of pages of the process. Will be initialized to point to appropriate pages when the process is loaded into memory.
     char *script_name; // name of the script file stored in backing store to load data from.
+    int exec_init; // flag to indicate whether the process has been initialized for execution.
 } pcb_t;
 
 #endif /* PCB_H */
