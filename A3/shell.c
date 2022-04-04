@@ -3,6 +3,8 @@
 #include <string.h> 
 #include <sys/stat.h>
 #include <errno.h>
+#include <time.h>
+
 #include "interpreter.h"
 #include "shellmemory.h"
 #include "pcb.h"
@@ -17,6 +19,8 @@ int parseInput(char ui[], pcb_t *pcb, rq_t *rq);
 // Start of everything
 int main(int argc, char *argv[])
 {
+	// set seed for the random number generator
+	srand(time(NULL));
 
 	printf("%s\n", "Shell version 1.2 Created March 2022");
 	printf("Frame Store Size = %d; Variable Store Size = %d\n",FREE_LIST_SIZE * FRAME_SIZE, VAR_MEM_SIZE);

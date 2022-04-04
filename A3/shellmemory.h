@@ -26,7 +26,7 @@ void load_page(pcb_t *pcb, int page_num, char **page);
 
 int mem_load_script_line(int pid, int line_number, char *script_line, struct memory_struct *mem);
 int mem_load_script(FILE *script, pcb_t *pcb, rq_t *rq);
-int mem_cleanup_script(pcb_t *pcb);
+int mem_cleanup_script(pcb_t *pcb, rq_t *rq);
 int mem_cleanup_frame(int frame_num);
 
 #endif /* SHELLMEMORY_H */

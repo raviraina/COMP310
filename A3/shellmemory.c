@@ -3,10 +3,10 @@
 #include <stdio.h>
 #include <regex.h>
 #include <assert.h>
+
 #include "shellmemory.h"
 #include "pcb.h"
 #include "readyqueue.h"
-
 
 const int FRAME_SIZE = 3; // size of each frame in shellmemory
 const int VAR_MEM_SIZE = (int) VARMEMSIZE; // part of shellmemory to store variables
@@ -152,7 +152,7 @@ void load_page(pcb_t *pcb, int page_num, char **page) {
 		if(fgets(line, 1000, script) != NULL) {
 			page[i++] = strdup(line);
 		} else {
-			page[i++] = strdup("\0");
+			page[i++] = strdup("none");
 		}
 	}
 
@@ -164,9 +164,13 @@ void load_page(pcb_t *pcb, int page_num, char **page) {
 int mem_load_script_line(int pid, int line_number, char *script_line, struct memory_struct *mem) {
 	int i;
 	char key[10];
-	if(snprintf(key, 10, "%d-%d", pid, line_number) < 0) { 
-		printf("Error: unable to load line %d of process %d\n", line_number, pid);
-		return -1;
+	if (strcmp(script_line, "none") == 0){
+		strcpy(key, "none");
+	} else {
+		if(snprintf(key, 10, "%d-%d", pid, line_number) < 0) { 
+			printf("Error: unable to load line %d of process %d\n", line_number, pid);
+			return -1;
+		}
 	}
 	mem->var = strdup(key);
 	mem->value = strdup(script_line);
@@ -203,6 +207,7 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num, rq_t *rq) {
 			// load the frame into that spot and update the pcb->page_table
 			err = mem_load_frame1(pcb->pid, (page_num * FRAME_SIZE) + 1, script_lines, i);
 			pcb->page_table[page_num] = i;
+			printf("Loading page into frame %d\n", i);
 			break;
 		}
 	}
@@ -241,13 +246,18 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num, rq_t *rq) {
 		// evict the frame
 		mem_cleanup_frame(frame_num_to_evict);
 
+		printf("Loading page into frame %d [evicted]\n", frame_num_to_evict);
+
 		// load the new page into the opened up slot and update pcb->page_table
 		err = mem_load_frame1(pcb->pid, (page_num * FRAME_SIZE) + 1, script_lines, frame_num_to_evict);
 		pcb->page_table[page_num] = frame_num_to_evict;
+
+		// mark frame as unavailable
+		free_list[frame_num_to_evict] = 0;
 	}
 
 	for (int x = 0; x < FRAME_SIZE; x++) {
-		printf("FRAME %d - PROCESS %d PAGE %d ----> %s", pcb->page_table[page_num], pcb->pid, page_num, mem_get_entry(pcb->page_table[page_num], x)->value);
+		printf("FRAME %d - PROCESS %d PAGE %d ----> <<COMMAND %s>> %s ", pcb->page_table[page_num], pcb->pid, page_num, mem_get_entry(pcb->page_table[page_num], x)->var, mem_get_entry(pcb->page_table[page_num], x)->value);
 	}
 	printf("\n");
 
@@ -324,9 +334,12 @@ int mem_cleanup_frame(int frame_num) {
 
 
 // cleans up a script stored in shellmemory
-int mem_cleanup_script(pcb_t *pcb) {
+int mem_cleanup_script(pcb_t *pcb, rq_t *rq) {
 	char *var;
 	int pid;
+
+	// remove the pcb from the ready queue
+	remove_rq_pcb(rq, pcb);
 
 	// clean up script from shell memory
 	for (int i = 0; i < pcb->num_pages; i++) {

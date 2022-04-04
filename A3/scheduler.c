@@ -26,6 +26,8 @@ int increment_pc(pcb_t *pcb) {
     struct memory_struct *frame_last_entry = mem_get_entry(pcb->page_table[pcb->curr_page], FRAME_SIZE - 1);
     if (pcb->pc < frame_last_entry) {
         pcb->pc++;
+        // check whether the new PC corresponds to an empty command i.e., we have reached the end of script
+        if (strcmp(pcb->pc->value, "none") == 0) pcb->pc = NULL;
         return 0;
     } else {
         // check whether we have reached the end of the script
@@ -48,7 +50,7 @@ int increment_pc(pcb_t *pcb) {
 
 
 int handle_page_fault(pcb_t *pcb, rq_t *rq) {
-    printf("<<<HANDLING PAGE FAULT>>>\n");
+    printf("<<<HANDLING PAGE FAULT>>> ");
 
     // handle page fault
     char *page[FRAME_SIZE];
@@ -82,7 +84,7 @@ int execute_command(pcb_t *pcb, rq_t *rq) {
         return 0;
     }
     
-    // printf("<<<EXECUTING COMMAND>>> %s\n", pcb->pc->value);
+    printf("<<<EXECUTING COMMAND %s >>> %s\n", pcb->pc->var, pcb->pc->value);
     // pass the stuff to parseInput function
     int err = parseInput(pcb->pc->value, pcb, rq);
     
@@ -145,7 +147,7 @@ int FCFS_scheduler(rq_t *rq) {
         }
 
         // cleanup the current process
-        mem_cleanup_script(rq_head);
+        mem_cleanup_script(rq_head, rq);
 
     }
     return err;
@@ -165,27 +167,31 @@ int SJF_scheduler(rq_t *rq) {
 // Runs the processes in the ready queue according to RR scheduling policy
 // Note: To make things simpler, in this assignment one-liners are considered as a single instruction.
 int RR_scheduler(rq_t *rq) {
-    int err = 0;
+    int pf, err = 0;
     pcb_t *rq_head;
     
     while ((rq_head = pop_rq_head(rq)) != NULL) {   
         // execute two instructions of the process
         for (int i =  0; (i < 2) && ((rq_head->pc != NULL) || (rq_head->exec_init == 0)); i++) {
+            pf = 0;
             err = execute_command(rq_head, rq);
             if (err == -9) {
                 // handle page fault and continue with the program execution
                 handle_page_fault(rq_head, rq);
+                pf = 1;
                 break;
             }
 
         }
 
         if (rq_head->pc != NULL) {
-            // add the process back to the ready queue (waiting state) if it hasn't reached its end yet
-            add_rq_tail(rq, rq_head);
+            if (!pf) {
+               // add the process back to the ready queue (waiting state) if it hasn't reached its end yet
+                add_rq_tail(rq, rq_head);
+            }
         } else {
             // cleanup the current process
-            mem_cleanup_script(rq_head);
+            mem_cleanup_script(rq_head, rq);
         }
     }
     return err;
@@ -230,7 +236,7 @@ int AGING_scheduler(rq_t *rq) {
 
         // if the head process has finished execution, cleanup the memory.
         if (rq_head->pc == NULL) {
-            mem_cleanup_script(rq_head);
+            mem_cleanup_script(rq_head, rq);
             min_jls_pcb = remove_rq_pcb(rq, min_jls_pcb);
             add_rq_head(rq, min_jls_pcb);
         }
