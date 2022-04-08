@@ -41,12 +41,12 @@ int main(int argc, char *argv[])
 					exit(1);
 				
 				case EEXIST:
-					printf("pathname already exists\n");
+					printf("ERROR: Filename for backingstore already exists!\n");
 					sprintf(cmd, "rm -r %s", name);
 					result = system(cmd);
 					
 					if (result == 0) {
-        				printf("It is deleted\n");
+        				printf("Leftover Backing Store Found: Removing Contents\n");
 					}
 					continue;
 				
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 					exit(EXIT_FAILURE);
 			}
 		} else {
-			printf("back store created\n");
+			printf("Backing Store Created\n");
 			backingUsable = 1;
 		}
 	}

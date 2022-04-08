@@ -109,10 +109,10 @@ int quit(){
 		result = system(cmd);
 		
 		if (result == 0) {
-			printf("It is deleted\n");
+			printf("Backing Store Removed\n");
 		}
 	} else if (ENOENT == errno) {
-		printf("Couldn't find backingstore directory to delete\n");
+		printf("Couldn't find Backing Store directory to delete\n");
 	}
 	printf("%s\n", "Bye!");
 	exit(0);
@@ -267,16 +267,6 @@ int myls() {
 }
 
 int exec(char* args[], int args_size, char* policy, rq_t *rq) {
-	
-	// NOTE: A3 allows for identical args, shouldn't need this anymore
-	// check for duplicate args
-	// for (int i = 0; i < args_size; i++) {
-	// 	for (int j = i + 1; j < args_size; j++) {
-	// 		if (strcmp(args[i],args[j]) == 0) {
-	// 			return badCommandDuplicateArguments();
-	// 		}
-	// 	}
-	// }
 
 	// case if only 1 prog (FCFS through run)
 	if (args_size == 1) {
