@@ -23,7 +23,6 @@ int main(int argc, char *argv[])
 	srand(time(NULL));
 
 	printf("%s\n", "Shell version 1.2 Created March 2022");
-	printf("Frame Store Size = %d; Variable Store Size = %d\n",FREE_LIST_SIZE * FRAME_SIZE, VAR_MEM_SIZE);
 	help();
 
 	// TODO: Remove verbose error checking
@@ -64,7 +63,7 @@ int main(int argc, char *argv[])
 			backingUsable = 1;
 		}
 	}
-
+	printf("Frame Store Size = %d; Variable Store Size = %d\n",FREE_LIST_SIZE * FRAME_SIZE, VAR_MEM_SIZE);
 	char prompt = '$';				// Shell prompt
 	char userInput[MAX_USER_INPUT]; // user's input stored here
 	int errorCode = 0;				// zero means no error, default
