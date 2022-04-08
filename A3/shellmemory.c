@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <regex.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "shellmemory.h"
 #include "frame.h"
@@ -48,6 +49,15 @@ void mem_init(){
 // get the shellmemory struct for a given frame and offset
 mem_entry_t *mem_get_entry(int frame_number, int offset){
 	assert(frame_number < FREE_LIST_SIZE && offset >= 0 && offset < FRAME_SIZE);
+
+	free_list[frame_number].age = 0; // age of the most recently accessed page = 0
+	// increment the age of all other occupied frames
+	for (int i = 0; i < FREE_LIST_SIZE; i++) {
+		if (free_list[i].is_available == 0 && i != frame_number) {
+			free_list[i].age++;
+		}
+	}
+
 	return &shellmemory[VAR_MEM_SIZE + (frame_number * FRAME_SIZE)] + offset;
 }
 
@@ -201,8 +211,18 @@ int mem_load_frame1(int pid, int line_number, char **script_lines, int frame_num
 
 // Loads a page into a frame in shellmemory and updates the page tables accordingly
 int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num) {
-	int flag = 0, frame_num, err = 0;
+	int flag = 0, frame_num, max_age = INT_MIN, err = 0;
 	pcb_t *pcb_evict = NULL;
+
+	printf("Frames available: ");
+	for (int i = 0; i < FREE_LIST_SIZE; i++) {
+		if (free_list[i].is_available == 1) {
+			flag = 1;
+			printf("%d ", i);
+		}
+	}
+	if(!flag) printf("none");
+	printf("\n");
 
 	for (int i = 0; i < FREE_LIST_SIZE; i++) {
 		// find whether a frame is available
@@ -222,7 +242,15 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num) {
 	if (!flag) {
 		flag = 0;
 		// find a frame to evict
-		frame_num = rand() % FREE_LIST_SIZE;
+		// frame_num = rand() % FREE_LIST_SIZE; // choose a random frame
+
+		// choose the least recently used frame to evict i.e., the one with maximum age
+		for (int i = 0; i < FREE_LIST_SIZE; i++) {
+			if(free_list[i].age > max_age) {
+				max_age = free_list[i].age;
+				frame_num = i;
+			}
+		}
 
 		// find the correspponding PCB to which the frame belongs and update its page table accordingly
 		pcb_evict = free_list[frame_num].pcb;
@@ -233,10 +261,16 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num) {
 			}
 		}
 
+		// display contents of the frame to be evicted
+		printf("Loading page into frame %d [evicted]\n", frame_num);
+		printf("Contents of evicted frame are:\n");
+		for (int x = 0; x < FRAME_SIZE; x++) {
+			printf("FRAME %d - PROCESS %d ----> <<COMMAND %s>> %s", frame_num, free_list[frame_num].pcb->pid, mem_get_entry(frame_num, x)->var, mem_get_entry(frame_num, x)->value);
+		}
+		printf("\n");
+
 		// evict the frame
 		mem_cleanup_frame(frame_num);
-
-		printf("Loading page into frame %d [evicted]\n", frame_num);
 	}
 
 	// load the new page into the frame found and update the pcb->page_table
@@ -246,12 +280,12 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num) {
 	// update frame params
 	free_list[frame_num].is_available = 0;
 	free_list[frame_num].pcb = pcb;
-	free_list[frame_num].age++; // because recently accessed.
+	// free_list[frame_num].age++; // because recently accessed.
 
-	for (int x = 0; x < FRAME_SIZE; x++) {
-		printf("FRAME %d - PROCESS %d PAGE %d ----> <<COMMAND %s>> %s ", pcb->page_table[page_num], pcb->pid, page_num, mem_get_entry(pcb->page_table[page_num], x)->var, mem_get_entry(pcb->page_table[page_num], x)->value);
-	}
-	printf("\n");
+	// for (int x = 0; x < FRAME_SIZE; x++) {
+	// 	printf("FRAME %d - PROCESS %d PAGE %d ----> <<COMMAND %s>> %s ", pcb->page_table[page_num], pcb->pid, page_num, mem_get_entry(pcb->page_table[page_num], x)->var, mem_get_entry(pcb->page_table[page_num], x)->value);
+	// }
+	// printf("\n");
 
 	return err;
 }

@@ -84,9 +84,9 @@ int execute_command(pcb_t *pcb, rq_t *rq) {
         return 0;
     }
     
-    printf("<<<EXECUTING COMMAND %s >>> %s\n", pcb->pc->var, pcb->pc->value);
+    // printf("<<<EXECUTING COMMAND %s >>> %s\n", pcb->pc->var, pcb->pc->value);
     // pass the stuff to parseInput function
-    int err = parseInput(pcb->pc->value, pcb, rq);
+    int err = parseInput(strdup(pcb->pc->value), pcb, rq);
     
     // return the error code
     return err;
