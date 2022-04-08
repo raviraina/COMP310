@@ -326,6 +326,8 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 }
 
 int resetmem() {
-	// TOOD: Implement
+	// reset memory as it was initially
+	mem_init();
+
 	return 0;
 }
