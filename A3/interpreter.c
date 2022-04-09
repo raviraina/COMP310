@@ -196,7 +196,9 @@ int run(char* script, rq_t *rq){
 	// Preprocess: move to backing store
 	char copy_command[50];
 	sprintf(copy_command, "cp %s backingstore", script);
-	if (!system(copy_command)) return -1;
+	if(system(copy_command) != 0) {
+		return badCommandUnableToLoadScript(script);
+	}
 
 	// retreive filename from path
 	char *llen;
@@ -297,7 +299,9 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 		// preprocess: move to backing store
 		char copy_command[50];
 		sprintf(copy_command, "cp %s backingstore", args[i]);
-		system(copy_command);
+		if(system(copy_command) != 0) {
+			return badCommandUnableToLoadScript(args[i]);
+		}
 
 		// retreive filename from path
 		char *llen;

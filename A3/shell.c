@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 			backingUsable = 1;
 		}
 	}
-	printf("Frame Store Size = %d; Variable Store Size = %d\n",FREE_LIST_SIZE * FRAME_SIZE, VAR_MEM_SIZE);
+	printf("Frame Store Size = %d; Number of frames available = %d; Variable Store Size = %d\n",FREE_LIST_SIZE * FRAME_SIZE, FREE_LIST_SIZE, VAR_MEM_SIZE);
 	char prompt = '$';				// Shell prompt
 	char userInput[MAX_USER_INPUT]; // user's input stored here
 	int errorCode = 0;				// zero means no error, default
