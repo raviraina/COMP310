@@ -8,10 +8,10 @@ typedef struct memory_struct{
 	char *value;
 } mem_entry_t;
 
-extern const int FRAME_SIZE;
-extern const int VAR_MEM_SIZE;
-extern const int FREE_LIST_SIZE;
-extern const int SHELL_MEM_SIZE;
+extern int FRAME_SIZE;
+extern int VAR_MEM_SIZE;
+extern int FREE_LIST_SIZE;
+extern int SHELL_MEM_SIZE;
 
 void mem_init();
 mem_entry_t *mem_get_entry(int frame_number, int offset);

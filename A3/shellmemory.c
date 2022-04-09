@@ -10,22 +10,23 @@
 #include "pcb.h"
 #include "readyqueue.h"
 
-const int FRAME_SIZE = 3; // size of each frame in shellmemory
-const int VAR_MEM_SIZE = (int) VARMEMSIZE; // part of shellmemory to store variables
-const int SHELL_MEM_SIZE = FRAMEMEMSIZE + VARMEMSIZE; // total size of the shellmemory
-const int FREE_LIST_SIZE = FRAMEMEMSIZE % FRAME_SIZE == 0 ? FRAMEMEMSIZE / FRAME_SIZE : (int) (FRAMEMEMSIZE / FRAME_SIZE) + 1; // amount of shellmemory entries allocated for frames and also the size of free_list
+int FRAME_SIZE = 3; // size of each frame in shellmemory
+int VAR_MEM_SIZE = (int) VARMEMSIZE; // part of shellmemory to store variables
+int SHELL_MEM_SIZE = FRAMEMEMSIZE + VARMEMSIZE; // total size of the shellmemory
+int FREE_LIST_SIZE = (int) (FRAMEMEMSIZE / 3); // amount of shellmemory entries allocated for frames and also the size of free_list
+
 
 /*
 * first 100 places in shell memory are reserved for variables
 * the remaining memory is used for loading scripts
 */
-mem_entry_t shellmemory[SHELL_MEM_SIZE];
+mem_entry_t shellmemory[FRAMEMEMSIZE + VARMEMSIZE];
 
-/* 
+/*
 * free_list to keep track of holes in shell memory
 * index i of free_list corresponds to VAR_MEM_SIZE + (i * FRAME_SIZE) in shell memory
 */
-frame_t free_list[FREE_LIST_SIZE];
+frame_t free_list[(int) (FRAMEMEMSIZE / 3)];
 
 // initialize shell memory with all variables and respective values as "none"
 void mem_init(){
