@@ -79,6 +79,32 @@ int interpreter(char* command_args[], int args_size, pcb_t *pcb, rq_t *rq){
 	} else if (strcmp(command_args[0], "exec")==0) {
 		if (args_size < 3) return badcommandTooFewTokens();
 		if (args_size > 5) return badcommandTooManyTokens();
+		
+		for (int i = 1; i < args_size - 1; i++) {
+			// create and execute copy to backing store
+			char copy_command[50];
+			sprintf(copy_command, "cp %s backingstore", command_args[i]);
+			system(copy_command);
+
+			// retreive filename from path
+			char *llen;
+			int l = 0;
+			llen = strstr(command_args[i], "/");
+			do {
+				l = strlen(llen) + 1;
+				command_args[i] = &command_args[i][strlen(command_args[i]) - l + 2];
+				llen = strstr(command_args[i], "/");
+			} while(llen);
+			
+			// set command arg to backingstore path
+			char backing_loc[50];
+			sprintf(backing_loc, "backingstore/%s", command_args[i]);
+			command_args[i] = backing_loc;
+
+			printf("FILENAME: %s\n", command_args[i]);
+			printf("COPY COMMAND: %s\n", copy_command);
+		}
+
 		return exec(command_args+1, args_size-2, command_args[args_size - 1], rq);
 		
 	} else if (strcmp(command_args[0], "resetmem")==0) {
@@ -276,6 +302,9 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 	// load all PCBs into the ready queue
 	for (int i = 0; i < args_size; i++) {
 		FILE *fp = fopen(args[i], "rt");
+		printf("SCRIPT: %s\n", args[i]);
+		printf("ITERATION: %d\n", i);
+
 		
 		if (fp == NULL) {
 			return badcommandFileDoesNotExist(args[i]);
