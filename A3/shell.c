@@ -3,10 +3,13 @@
 #include <string.h> 
 #include <sys/stat.h>
 #include <errno.h>
+#include <time.h>
+
 #include "interpreter.h"
 #include "shellmemory.h"
 #include "pcb.h"
 #include "readyqueue.h"
+
 
 // max vars
 const int MAX_USER_INPUT = 1000;
@@ -17,14 +20,15 @@ int parseInput(char ui[], pcb_t *pcb, rq_t *rq);
 // Start of everything
 int main(int argc, char *argv[])
 {
+	// set seed for the random number generator
+	srand(time(NULL));
 
-	printf("%s\n", "Shell version 1.2 Created March 2022");
+	printf("%s\n", "Shell version 1.3 Created April 2022");
 	help();
 
-	// TODO: Remove verbose error checking
 	// create backing store
 	int backingUsable = 0;
-	const char *name = "backingstore";
+	char *name = "backingstore";
 	while(backingUsable == 0) {
 		errno = 0;
 		char cmd[40];
@@ -33,33 +37,33 @@ int main(int argc, char *argv[])
 		if (ret == -1) {
 			switch (errno) {
 				case EACCES :
-					printf("ERROR: Current directory does not allow write access.");
+					printf("ERROR: Current directory does not allow write access\n");
 					exit(1);
 				
 				case EEXIST:
-					printf("pathname already exists");
+					printf("Backingstore already exists!\n");
 					sprintf(cmd, "rm -r %s", name);
 					result = system(cmd);
 					
 					if (result == 0) {
-        				printf("It is deleted\n");
+						printf("Clearing backing store contents...\n");
 					}
 					continue;
 				
 				case ENAMETOOLONG:
-					printf("ERROR: Specified folder name is too long.");
+					printf("ERROR: Specified folder name is too long\n");
 					exit(1);
 				
 				default:
-					perror("mkdir");
+					perror("ERROR: mkdir failed");
 					exit(EXIT_FAILURE);
 			}
 		} else {
-			printf("back store created");
+			printf("Backing Store Created\n");
 			backingUsable = 1;
 		}
 	}
-
+	printf("Frame Store Size = %d; Number of frames available = %d; Variable Store Size = %d\n",FREE_LIST_SIZE * FRAME_SIZE, FREE_LIST_SIZE, VAR_MEM_SIZE);
 	char prompt = '$';				// Shell prompt
 	char userInput[MAX_USER_INPUT]; // user's input stored here
 	int errorCode = 0;				// zero means no error, default

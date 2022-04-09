@@ -1,1 +1,1 @@
-exec prog7 prog8 prog9 RR
+exec a3tests/prog7 a3tests/prog8 a3tests/prog9 RR

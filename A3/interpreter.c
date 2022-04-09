@@ -67,7 +67,6 @@ int interpreter(char* command_args[], int args_size, pcb_t *pcb, rq_t *rq){
 		return run(command_args[1], rq);
 	
 	} else if (strcmp(command_args[0], "echo")==0) {
-		// TODO: may need to modify this once enhanced set implemented
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
 		return echo(command_args[1], pcb);
@@ -109,10 +108,10 @@ int quit(){
 		result = system(cmd);
 		
 		if (result == 0) {
-			printf("It is deleted\n");
+			printf("Backing store removed\n");
 		}
 	} else if (ENOENT == errno) {
-		printf("Couldn't find backingstore directory to delete");
+		printf("Couldn't find backing store directory to delete\n");
 	}
 	printf("%s\n", "Bye!");
 	exit(0);
@@ -194,26 +193,48 @@ int print(char* var, pcb_t *pcb){
 int run(char* script, rq_t *rq){
 	pcb_t *pcb = malloc(sizeof(pcb_t));
 
+	// Preprocess: move to backing store
+	char copy_command[50];
+	sprintf(copy_command, "cp %s backingstore", script);
+	if(system(copy_command) != 0) {
+		return badCommandUnableToLoadScript(script);
+	}
+
+	// retreive filename from path
+	char *llen;
+	int l = 0;
+	llen = strstr(script, "/");
+	do {
+		l = strlen(llen) + 1;
+		script = &script[strlen(script) - l + 2];
+		llen = strstr(script, "/");
+	} while(llen);
+	
+	// set command arg to backingstore path
+	char backing_script[50];
+	sprintf(backing_script, "backingstore/%s", script);
+
 	if (pcb == NULL) {
 		return badCommandUnableToLoadScript(script);
 	}
 
-	FILE *fp = fopen(script, "rt"); // the program is in a file
+	FILE *fp = fopen(backing_script, "rt"); // the program is in a file
 
 	if (fp == NULL) {
-		return badcommandFileDoesNotExist(script);
+		return badcommandFileDoesNotExist(backing_script);
 	}
 
 	// initiate a pcb for the script
 	pcb->pid = CURR_PID++;
 	pcb->next = NULL;
+	pcb->script_name = strdup(backing_script);
 
 	// add pcb to the ready queue
 	add_rq_tail(rq, pcb);
 
 	// load script into memory
 	if (mem_load_script(fp, pcb) != 0) {
-		return badCommandUnableToLoadScript(script);
+		return badCommandUnableToLoadScript(backing_script);
 	}
 
 	// close the script
@@ -266,16 +287,6 @@ int myls() {
 }
 
 int exec(char* args[], int args_size, char* policy, rq_t *rq) {
-	
-	// NOTE: A3 allows for identical args, shouldn't need this anymore
-	// check for duplicate args
-	// for (int i = 0; i < args_size; i++) {
-	// 	for (int j = i + 1; j < args_size; j++) {
-	// 		if (strcmp(args[i],args[j]) == 0) {
-	// 			return badCommandDuplicateArguments();
-	// 		}
-	// 	}
-	// }
 
 	// case if only 1 prog (FCFS through run)
 	if (args_size == 1) {
@@ -284,7 +295,29 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 
 	// load all PCBs into the ready queue
 	for (int i = 0; i < args_size; i++) {
-		FILE *fp = fopen(args[i], "rt");
+
+		// preprocess: move to backing store
+		char copy_command[50];
+		sprintf(copy_command, "cp %s backingstore", args[i]);
+		if(system(copy_command) != 0) {
+			return badCommandUnableToLoadScript(args[i]);
+		}
+
+		// retreive filename from path
+		char *llen;
+		int l = 0;
+		llen = strstr(args[i], "/");
+		do {
+			l = strlen(llen) + 1;
+			args[i] = &args[i][strlen(args[i]) - l + 2];
+			llen = strstr(args[i], "/");
+		} while(llen);
+		
+		// set command arg to backingstore path
+		char backing_script[50];
+		sprintf(backing_script, "backingstore/%s", args[i]);
+
+		FILE *fp = fopen(backing_script, "rt");
 		
 		if (fp == NULL) {
 			return badcommandFileDoesNotExist(args[i]);
@@ -298,11 +331,12 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 
 		pcb->pid = CURR_PID++;
 		pcb->next = NULL;
+		pcb->script_name = strdup(backing_script);
 
 		add_rq_tail(rq, pcb);
 		
 		if (mem_load_script(fp, pcb) != 0) {
-			return badCommandUnableToLoadScript(args[i]);
+			return badCommandUnableToLoadScript(backing_script);
 		}
 
 		fclose(fp);
@@ -324,6 +358,8 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 }
 
 int resetmem() {
-	// TOOD: Implement
+	// reset memory as it was initially
+	mem_init();
+
 	return 0;
 }
