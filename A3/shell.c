@@ -10,6 +10,7 @@
 #include "pcb.h"
 #include "readyqueue.h"
 
+
 // max vars
 const int MAX_USER_INPUT = 1000;
 const int MAX_NUM_COMMANDS = 10;
@@ -25,10 +26,9 @@ int main(int argc, char *argv[])
 	printf("%s\n", "Shell version 1.3 Created March 2022");
 	help();
 
-	// TODO: Remove verbose error checking
 	// create backing store
 	int backingUsable = 0;
-	const char *name = "backingstore";
+	char *name = "backingstore";
 	while(backingUsable == 0) {
 		errno = 0;
 		char cmd[40];
@@ -37,25 +37,25 @@ int main(int argc, char *argv[])
 		if (ret == -1) {
 			switch (errno) {
 				case EACCES :
-					printf("ERROR: Current directory does not allow write access.\n");
+					printf("ERROR: Current directory does not allow write access\n");
 					exit(1);
 				
 				case EEXIST:
-					printf("ERROR: Filename for backingstore already exists!\n");
+					printf("Backingstore already exists!\n");
 					sprintf(cmd, "rm -r %s", name);
 					result = system(cmd);
 					
 					if (result == 0) {
-        				printf("Leftover Backing Store Found: Removing Contents\n");
+						printf("Clearing backing store contents...\n");
 					}
 					continue;
 				
 				case ENAMETOOLONG:
-					printf("ERROR: Specified folder name is too long.\n");
+					printf("ERROR: Specified folder name is too long\n");
 					exit(1);
 				
 				default:
-					perror("mkdir");
+					perror("ERROR: mkdir failed");
 					exit(EXIT_FAILURE);
 			}
 		} else {

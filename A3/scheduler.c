@@ -84,7 +84,6 @@ int execute_command(pcb_t *pcb, rq_t *rq) {
         return 0;
     }
     
-    // printf("<<<EXECUTING COMMAND %s >>> %s\n", pcb->pc->var, pcb->pc->value);
     // pass the stuff to parseInput function
     int err = parseInput(strdup(pcb->pc->value), pcb, rq);
     
@@ -148,6 +147,7 @@ int FCFS_scheduler(rq_t *rq) {
 
         // remove rq_head from the ready queue
         remove_rq_pcb(rq, rq_head);
+
         // cleanup the current process
         mem_cleanup_script(rq_head);
 
@@ -194,6 +194,7 @@ int RR_scheduler(rq_t *rq) {
         } else {
             // remove rq_head from the ready queue
             remove_rq_pcb(rq, rq_head);
+
             // cleanup the current process
             mem_cleanup_script(rq_head);
         }
@@ -242,6 +243,7 @@ int AGING_scheduler(rq_t *rq) {
         if (rq_head->pc == NULL) {
             // remove rq_head from the ready queue
             remove_rq_pcb(rq, rq_head);
+            
             // cleanup the current process
             mem_cleanup_script(rq_head);
 

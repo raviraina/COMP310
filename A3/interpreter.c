@@ -67,7 +67,6 @@ int interpreter(char* command_args[], int args_size, pcb_t *pcb, rq_t *rq){
 		return run(command_args[1], rq);
 	
 	} else if (strcmp(command_args[0], "echo")==0) {
-		// TODO: may need to modify this once enhanced set implemented
 		if (args_size < 2) return badcommandTooFewTokens();
 		if (args_size > 2) return badcommandTooManyTokens();
 		return echo(command_args[1], pcb);
@@ -109,10 +108,10 @@ int quit(){
 		result = system(cmd);
 		
 		if (result == 0) {
-			printf("Backing Store Removed\n");
+			printf("Backing store removed\n");
 		}
 	} else if (ENOENT == errno) {
-		printf("Couldn't find Backing Store directory to delete\n");
+		printf("Couldn't find backing store directory to delete\n");
 	}
 	printf("%s\n", "Bye!");
 	exit(0);
@@ -194,11 +193,10 @@ int print(char* var, pcb_t *pcb){
 int run(char* script, rq_t *rq){
 	pcb_t *pcb = malloc(sizeof(pcb_t));
 
-			// -------- preprocess: move to backing store
+	// Preprocess: move to backing store
 	char copy_command[50];
 	sprintf(copy_command, "cp %s backingstore", script);
-	system(copy_command);
-	// printf("COPY COMMAND: %s\n", copy_command);
+	if (!system(copy_command)) return -1;
 
 	// retreive filename from path
 	char *llen;
@@ -211,32 +209,30 @@ int run(char* script, rq_t *rq){
 	} while(llen);
 	
 	// set command arg to backingstore path
-	char backing_loc[50];
-	sprintf(backing_loc, "backingstore/%s", script);
-	script = backing_loc;
-	// --------
+	char backing_script[50];
+	sprintf(backing_script, "backingstore/%s", script);
 
 	if (pcb == NULL) {
 		return badCommandUnableToLoadScript(script);
 	}
 
-	FILE *fp = fopen(script, "rt"); // the program is in a file
+	FILE *fp = fopen(backing_script, "rt"); // the program is in a file
 
 	if (fp == NULL) {
-		return badcommandFileDoesNotExist(script);
+		return badcommandFileDoesNotExist(backing_script);
 	}
 
 	// initiate a pcb for the script
 	pcb->pid = CURR_PID++;
 	pcb->next = NULL;
-	pcb->script_name = strdup(script);
+	pcb->script_name = strdup(backing_script);
 
 	// add pcb to the ready queue
 	add_rq_tail(rq, pcb);
 
 	// load script into memory
 	if (mem_load_script(fp, pcb) != 0) {
-		return badCommandUnableToLoadScript(script);
+		return badCommandUnableToLoadScript(backing_script);
 	}
 
 	// close the script
@@ -298,11 +294,10 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 	// load all PCBs into the ready queue
 	for (int i = 0; i < args_size; i++) {
 
-		// -------- preprocess: move to backing store
+		// preprocess: move to backing store
 		char copy_command[50];
 		sprintf(copy_command, "cp %s backingstore", args[i]);
 		system(copy_command);
-		// printf("COPY COMMAND: %s\n", copy_command);
 
 		// retreive filename from path
 		char *llen;
@@ -315,14 +310,10 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 		} while(llen);
 		
 		// set command arg to backingstore path
-		char backing_loc[50];
-		sprintf(backing_loc, "backingstore/%s", args[i]);
-		args[i] = backing_loc;
-		// --------
+		char backing_script[50];
+		sprintf(backing_script, "backingstore/%s", args[i]);
 
-		FILE *fp = fopen(args[i], "rt");
-		printf("SCRIPT PATH: %s\n", args[i]);
-
+		FILE *fp = fopen(backing_script, "rt");
 		
 		if (fp == NULL) {
 			return badcommandFileDoesNotExist(args[i]);
@@ -336,12 +327,12 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 
 		pcb->pid = CURR_PID++;
 		pcb->next = NULL;
-		pcb->script_name = strdup(args[i]);
+		pcb->script_name = strdup(backing_script);
 
 		add_rq_tail(rq, pcb);
 		
 		if (mem_load_script(fp, pcb) != 0) {
-			return badCommandUnableToLoadScript(args[i]);
+			return badCommandUnableToLoadScript(backing_script);
 		}
 
 		fclose(fp);

@@ -232,7 +232,7 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num) {
 			// set the frame num
 			frame_num = i;
 
-			printf("Loading page into frame %d\n", i);
+			printf("Loading page into frame %d\n\n", i);
 			break;
 		}
 	}
@@ -241,10 +241,10 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num) {
 	// update the required page tables...
 	if (!flag) {
 		flag = 0;
-		// find a frame to evict
-		// frame_num = rand() % FREE_LIST_SIZE; // choose a random frame
+		// find a frame to evict -- RANDOM page replacement policy
+		// frame_num = rand() % FREE_LIST_SIZE;
 
-		// choose the least recently used frame to evict i.e., the one with maximum age
+		// find a frame to evict -- LRU page replacement policy
 		for (int i = 0; i < FREE_LIST_SIZE; i++) {
 			if(free_list[i].age > max_age) {
 				max_age = free_list[i].age;
@@ -280,12 +280,6 @@ int mem_load_frame(pcb_t *pcb, char **script_lines, int page_num) {
 	// update frame params
 	free_list[frame_num].is_available = 0;
 	free_list[frame_num].pcb = pcb;
-	// free_list[frame_num].age++; // because recently accessed.
-
-	// for (int x = 0; x < FRAME_SIZE; x++) {
-	// 	printf("FRAME %d - PROCESS %d PAGE %d ----> <<COMMAND %s>> %s ", pcb->page_table[page_num], pcb->pid, page_num, mem_get_entry(pcb->page_table[page_num], x)->var, mem_get_entry(pcb->page_table[page_num], x)->value);
-	// }
-	// printf("\n");
 
 	return err;
 }
@@ -329,10 +323,6 @@ int mem_load_script(FILE *script, pcb_t *pcb) {
 	for (i = 0; (i < 2 && i < pcb->num_pages) ; i++) {
 		// load next page
 		load_page(pcb, i, page);
-
-		// for (j =0; j < FRAME_SIZE; j++) {
-		// 	printf("PAGE %d ----> %s\n", i, page[j]);
-		// }
 
 		// store the page into the frame
 		if (mem_load_frame(pcb, page, i) != 0) return -1;
