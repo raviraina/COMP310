@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 	// set seed for the random number generator
 	srand(time(NULL));
 
-	printf("%s\n", "Shell version 1.2 Created March 2022");
+	printf("%s\n", "Shell version 1.3 Created March 2022");
 	help();
 
 	// TODO: Remove verbose error checking
