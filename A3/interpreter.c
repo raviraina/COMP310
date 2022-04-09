@@ -194,6 +194,28 @@ int print(char* var, pcb_t *pcb){
 int run(char* script, rq_t *rq){
 	pcb_t *pcb = malloc(sizeof(pcb_t));
 
+			// -------- preprocess: move to backing store
+	char copy_command[50];
+	sprintf(copy_command, "cp %s backingstore", script);
+	system(copy_command);
+	// printf("COPY COMMAND: %s\n", copy_command);
+
+	// retreive filename from path
+	char *llen;
+	int l = 0;
+	llen = strstr(script, "/");
+	do {
+		l = strlen(llen) + 1;
+		script = &script[strlen(script) - l + 2];
+		llen = strstr(script, "/");
+	} while(llen);
+	
+	// set command arg to backingstore path
+	char backing_loc[50];
+	sprintf(backing_loc, "backingstore/%s", script);
+	script = backing_loc;
+	// --------
+
 	if (pcb == NULL) {
 		return badCommandUnableToLoadScript(script);
 	}
