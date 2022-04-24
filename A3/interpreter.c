@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h> // standard header in UNIX for directory traversal
 #include <errno.h>
+#include <libgen.h>
 
 #include "shellmemory.h"
 #include "shell.h"
@@ -201,18 +202,11 @@ int run(char* script, rq_t *rq){
 	}
 
 	// retreive filename from path
-	char *llen;
-	int l = 0;
-	llen = strstr(script, "/");
-	do {
-		l = strlen(llen) + 1;
-		script = &script[strlen(script) - l + 2];
-		llen = strstr(script, "/");
-	} while(llen);
+	char *filename = basename(script);
 	
 	// set command arg to backingstore path
 	char backing_script[50];
-	sprintf(backing_script, "backingstore/%s", script);
+	sprintf(backing_script, "backingstore/%s", filename);
 
 	if (pcb == NULL) {
 		return badCommandUnableToLoadScript(script);
@@ -304,18 +298,11 @@ int exec(char* args[], int args_size, char* policy, rq_t *rq) {
 		}
 
 		// retreive filename from path
-		char *llen;
-		int l = 0;
-		llen = strstr(args[i], "/");
-		do {
-			l = strlen(llen) + 1;
-			args[i] = &args[i][strlen(args[i]) - l + 2];
-			llen = strstr(args[i], "/");
-		} while(llen);
+		char *filename = basename(args[i]);
 		
 		// set command arg to backingstore path
 		char backing_script[50];
-		sprintf(backing_script, "backingstore/%s", args[i]);
+		sprintf(backing_script, "backingstore/%s", filename);
 
 		FILE *fp = fopen(backing_script, "rt");
 		
