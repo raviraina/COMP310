@@ -5,18 +5,18 @@ cd $1
 ls
 mkdir -p output
 
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog1 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog2 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog3 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog4 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog5 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog6 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog7 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog8 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog9 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog10 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog11 .
-cp ~/Projects/COMP310test/A3Solution_modified/testcases_public/prog12 .
+cp ../A3Solution_modified/testcases_public/prog1 .
+cp ../A3Solution_modified/testcases_public/prog2 .
+cp ../A3Solution_modified/testcases_public/prog3 .
+cp ../A3Solution_modified/testcases_public/prog4 .
+cp ../A3Solution_modified/testcases_public/prog5 .
+cp ../A3Solution_modified/testcases_public/prog6 .
+cp ../A3Solution_modified/testcases_public/prog7 .
+cp ../A3Solution_modified/testcases_public/prog8 .
+cp ../A3Solution_modified/testcases_public/prog9 .
+cp ../A3Solution_modified/testcases_public/prog10 .
+cp ../A3Solution_modified/testcases_public/prog11 .
+cp ../A3Solution_modified/testcases_public/prog12 .
 
 echo "-- test tc1 --"
 make clean; make mysh framesize=18 varmemsize=10
