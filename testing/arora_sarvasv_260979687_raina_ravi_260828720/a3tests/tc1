@@ -1,0 +1,1 @@
+exec a3tests/prog1 a3tests/prog2 a3tests/prog3 RR
